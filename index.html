@@ -200,13 +200,19 @@
             display: none;
             flex: 1;
             overflow-y: auto;
-            padding: 32px;
+            padding: 0 28px 20px 28px;
         }
 
         .view-section.active {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 14px;
+        }
+
+        /* Hero bar pegada al header sin espacio */
+        .meeting-hero-bar {
+            border-radius: 0 0 10px 10px;
+            border-top: none;
         }
 
         /* CONTROLS */
@@ -253,18 +259,18 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        /* KPI GRID */
+        /* KPI GRID — 4 columnas fijas, compacto */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
         }
 
         .kpi-card {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
             border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
@@ -273,24 +279,126 @@
         }
 
         .kpi-card:hover {
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* MEETING HERO BAR — barra horizontal compacta */
+        .meeting-hero-bar {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: stretch;
+            overflow: hidden;
+        }
+
+        .mhb-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+        }
+
+        .mhb-item.mhb-blue  { border-left: 4px solid var(--primary-color); }
+        .mhb-item.mhb-indigo { border-left: 4px solid #6366f1; background: #fafaff; }
+        .mhb-item.mhb-green  { border-left: 4px solid #10b981; }
+
+        .mhb-divider {
+            width: 1px;
+            background: var(--border-color);
+            margin: 10px 0;
+        }
+
+        .mhb-icon {
+            font-size: 16px;
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+
+        .mhb-blue  .mhb-icon { color: var(--primary-color); }
+        .mhb-indigo .mhb-icon { color: #6366f1; }
+        .mhb-green  .mhb-icon { color: #10b981; }
+
+        .mhb-body { flex: 1; min-width: 0; }
+
+        .mhb-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .mhb-vals {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .mhb-ytd {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.5px;
+        }
+
+        .mhb-blue  .mhb-ytd { color: var(--primary-dark); }
+        .mhb-indigo .mhb-ytd { color: #4338ca; }
+        .mhb-green  .mhb-ytd { color: #059669; }
+
+        .mhb-ytd-sub {
+            font-size: 10px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .mhb-sep {
+            width: 1px;
+            height: 20px;
+            background: var(--border-color);
+        }
+
+        .mhb-month-block {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        .mhb-month-val {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+
+        .mhb-month-label {
+            font-size: 10px;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-top: 1px;
         }
 
         .kpi-label {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .kpi-value {
-            font-size: 32px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
 
         .kpi-footer {
@@ -328,48 +436,48 @@
         /* CHARTS */
         .chart-container {
             background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 14px 18px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
             border: 1px solid var(--border-color);
             position: relative;
-            height: 400px;
+            height: 210px;
         }
 
         .chart-title {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 16px;
+            margin-bottom: 8px;
         }
 
         .charts-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
+            gap: 12px;
         }
 
         /* TABLES */
         .table-container {
             background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
             border: 1px solid var(--border-color);
             overflow-x: auto;
         }
 
         .table-title {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         thead {
@@ -378,17 +486,25 @@
         }
 
         th {
-            padding: 12px;
+            padding: 8px 10px;
             text-align: left;
             font-weight: 600;
             color: var(--text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
             white-space: nowrap;
+            font-size: 11px;
+            /* Sticky dentro del scroll de view-section */
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--neutral-100);
+            border-bottom: 2px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
         }
 
         td {
-            padding: 12px;
+            padding: 8px 10px;
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -982,7 +1098,17 @@
             }
 
             .kpi-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .meeting-hero-bar {
+                flex-direction: column;
+            }
+
+            .mhb-divider {
+                width: auto;
+                height: 1px;
+                margin: 0 10px;
             }
         }
     </style>
@@ -992,10 +1118,21 @@
         <!-- SIDEBAR -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-logo">SDR</div>
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="36" height="36" rx="9" fill="rgba(255,255,255,0.1)"/>
+                  <text x="4" y="28" font-family="'Arial Black','Impact',sans-serif" font-weight="900" font-size="26" fill="white" letter-spacing="-1">R</text>
+                  <circle cx="27" cy="30" r="6" fill="url(#rgSide)"/>
+                  <defs>
+                    <radialGradient id="rgSide" cx="35%" cy="25%" r="70%">
+                      <stop offset="0%" stop-color="#93c5fd"/>
+                      <stop offset="55%" stop-color="#3b82f6"/>
+                      <stop offset="100%" stop-color="#1d4ed8"/>
+                    </radialGradient>
+                  </defs>
+                </svg>
                 <div>
-                    <div class="sidebar-title">Dashboard</div>
-                    <div class="sidebar-version">v7.1</div>
+                    <div class="sidebar-title">Reditorial</div>
+                    <div class="sidebar-version">SDR v7.1</div>
                 </div>
             </div>
 
@@ -1018,7 +1155,7 @@
             </div>
 
             <div class="sidebar-footer">
-                <div>© 2026 SDR Scorecard</div>
+                <div style="font-size:11px;opacity:0.7;">© 2026 Reditorial</div>
             </div>
         </div>
 
@@ -1026,8 +1163,23 @@
         <div class="content-area">
             <!-- HEADER -->
             <div class="header">
-                <div>
-                    <h1 class="header-title">SDR Scorecard Dashboard</h1>
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <!-- Reditorial logo mark -->
+                    <svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <text x="4" y="85" font-family="'Arial Black','Impact',sans-serif" font-weight="900" font-size="90" fill="#0f172a" letter-spacing="-3">R</text>
+                      <circle cx="78" cy="90" r="16" fill="url(#rgHead)"/>
+                      <defs>
+                        <radialGradient id="rgHead" cx="35%" cy="25%" r="70%">
+                          <stop offset="0%" stop-color="#bfdbfe"/>
+                          <stop offset="45%" stop-color="#3b82f6"/>
+                          <stop offset="100%" stop-color="#1d4ed8"/>
+                        </radialGradient>
+                      </defs>
+                    </svg>
+                    <div>
+                      <div style="font-family:'Arial Black',sans-serif;font-weight:900;font-size:22px;color:#1a1a1a;line-height:1.1;letter-spacing:-0.3px;">Reditorial</div>
+                      <div style="font-size:11px;color:#64748b;font-weight:500;letter-spacing:0.5px;">Inteligencia Editorial · SDR Scorecard</div>
+                    </div>
                 </div>
                 <div class="header-controls">
                     <div class="controls">
@@ -1063,25 +1215,13 @@
 
             <!-- EXECUTIVE VIEW (default) -->
             <div class="view-section active" id="executive-view">
-                <!-- HEALTH SIGNAL + KEY METRICS -->
-                <div class="exec-health">
-                    <div class="exec-signal" id="execSignal"></div>
-                    <div>
-                        <div class="exec-section-title">Variables Clave — Ritmo Semanal</div>
-                        <div class="exec-section-sub">Cada métrica normalizada por semanas trabajadas. Barra = % del objetivo.</div>
-                        <div class="exec-kpi-rows" id="execKpiRows"></div>
+
+                <!-- 1. SDR SUMMARY TABLE — primera lectura, siempre visible -->
+                <div class="table-container" style="margin-bottom:20px;">
+                    <div class="table-title" style="display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-users" style="color:var(--primary-color);"></i>
+                        Resumen por SDR — Mes Actual vs Promedio Equipo
                     </div>
-                </div>
-
-                <!-- PACE & FORECAST -->
-                <div class="exec-pace-card">
-                    <div class="exec-pace-title"><i class="fas fa-forward" style="margin-right:6px;"></i> Proyección Cierre de Mes</div>
-                    <div class="exec-pace-grid" id="execPaceGrid"></div>
-                </div>
-
-                <!-- SDR SUMMARY TABLE -->
-                <div class="table-container">
-                    <div class="table-title">Resumen por SDR — Mes Actual vs Promedio Equipo</div>
                     <table>
                         <thead>
                             <tr>
@@ -1100,7 +1240,23 @@
                     </table>
                 </div>
 
-                <!-- EXEC CHARTS -->
+                <!-- 2. HEALTH SIGNAL + KEY METRICS -->
+                <div class="exec-health" style="margin-bottom:20px;">
+                    <div class="exec-signal" id="execSignal"></div>
+                    <div>
+                        <div class="exec-section-title">Variables Clave — Ritmo Semanal</div>
+                        <div class="exec-section-sub">Cada métrica normalizada por semanas trabajadas. Barra = % del objetivo.</div>
+                        <div class="exec-kpi-rows" id="execKpiRows"></div>
+                    </div>
+                </div>
+
+                <!-- 3. PACE & FORECAST -->
+                <div class="exec-pace-card" style="margin-bottom:20px;">
+                    <div class="exec-pace-title"><i class="fas fa-forward" style="margin-right:6px;"></i> Proyección Cierre de Mes</div>
+                    <div class="exec-pace-grid" id="execPaceGrid"></div>
+                </div>
+
+                <!-- 4. EXEC CHARTS -->
                 <div class="charts-grid">
                     <div class="chart-container">
                         <div class="chart-title">Ritmo Semanal — Evolución 4 Meses</div>
@@ -1115,6 +1271,60 @@
 
             <!-- DASHBOARD / OPERACIONES VIEW -->
             <div class="view-section" id="dashboard-view">
+
+                <!-- MEETING HERO BAR — solo hs_meeting_outcome = "COMPLETED" (Terminada) -->
+                <div class="meeting-hero-bar">
+                    <!-- First Meeting -->
+                    <div class="mhb-item mhb-blue">
+                        <i class="fas fa-calendar-check mhb-icon"></i>
+                        <div class="mhb-body">
+                            <div class="mhb-label">First Meeting</div>
+                            <div class="mhb-vals">
+                                <span class="mhb-ytd" id="heroFirstYTD">—</span>
+                                <span class="mhb-ytd-sub">YTD 2026</span>
+                                <div class="mhb-sep"></div>
+                                <span class="mhb-ytd-sub">Mes:</span>
+                                <span style="font-size:13px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;" id="heroFirstMonth">—</span>
+                                <span class="mhb-ytd-sub" id="heroFirstMonthLabel"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mhb-divider"></div>
+
+                    <!-- % First / Total -->
+                    <div class="mhb-item mhb-indigo" style="flex:0.7;justify-content:center;text-align:center;">
+                        <div class="mhb-body" style="text-align:center;">
+                            <div class="mhb-label" style="color:#6366f1;">% SDR First / Total</div>
+                            <div class="mhb-vals" style="justify-content:center;">
+                                <span class="mhb-ytd" id="heroPctYTD">—</span>
+                                <span class="mhb-ytd-sub">YTD</span>
+                                <div class="mhb-sep"></div>
+                                <span style="font-size:13px;font-weight:700;color:#6366f1;font-variant-numeric:tabular-nums;" id="heroPctMonth">—</span>
+                                <span class="mhb-ytd-sub" id="heroPctMonthLabel"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mhb-divider"></div>
+
+                    <!-- Total Reuniones -->
+                    <div class="mhb-item mhb-green">
+                        <i class="fas fa-users mhb-icon"></i>
+                        <div class="mhb-body">
+                            <div class="mhb-label">Total Reuniones</div>
+                            <div class="mhb-vals">
+                                <span class="mhb-ytd" id="heroTotalYTD">—</span>
+                                <span class="mhb-ytd-sub">YTD 2026</span>
+                                <div class="mhb-sep"></div>
+                                <span class="mhb-ytd-sub">Mes:</span>
+                                <span style="font-size:13px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;" id="heroTotalMonth">—</span>
+                                <span class="mhb-ytd-sub" id="heroTotalMonthLabel"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- KPI CARDS -->
                 <div id="kpiGrid" class="kpi-grid"></div>
 
@@ -1130,7 +1340,7 @@
                     </div>
                 </div>
 
-                <!-- TABLE -->
+                <!-- TABLE — sticky headers via view-section scroll -->
                 <div class="table-container">
                     <div class="table-title">Desglose Semanal</div>
                     <table>
@@ -1170,7 +1380,7 @@
                     </div>
                 </div>
 
-                <!-- SEMANAS TABLE -->
+                <!-- SEMANAS TABLE — sticky headers via view-section scroll -->
                 <div class="table-container">
                     <div class="table-title">Desglose de Todas las Semanas</div>
                     <table>
@@ -1648,6 +1858,37 @@
                     </div>
                 </div>
             `).join('');
+
+            // UPDATE MEETING HERO WIDGETS
+            const allMonths = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const monthIdx = allMonths.indexOf(month);
+            const ytdMonths = allMonths.slice(0, monthIdx + 1);
+            let firstMeetingsYTD = 0, totalMeetingsYTD = 0;
+            ytdMonths.forEach(m => {
+                const mt = calculateTotalMetrics(m, sdrFilter);
+                const ae = aeData[m] || {};
+                firstMeetingsYTD += mt.meetings;
+                // Total = first meetings (SDR) + demos (AE follow-up meetings)
+                totalMeetingsYTD += mt.meetings + (ae.demo || 0);
+            });
+            const thisAE = aeData[month] || {};
+            const totalMeetingsMonth = metrics.meetings + (thisAE.demo || 0);
+            const monthShort = month.split('-')[0];
+            const monthCap = monthShort.charAt(0).toUpperCase() + monthShort.slice(1);
+
+            // % conversión First/Total — solo reuniones COMPLETED (hs_meeting_outcome="COMPLETED")
+            const pctYTD = totalMeetingsYTD > 0 ? Math.round((firstMeetingsYTD / totalMeetingsYTD) * 100) : 0;
+            const pctMonth = totalMeetingsMonth > 0 ? Math.round((metrics.meetings / totalMeetingsMonth) * 100) : 0;
+
+            document.getElementById('heroFirstYTD').textContent = firstMeetingsYTD;
+            document.getElementById('heroFirstMonth').textContent = metrics.meetings;
+            document.getElementById('heroFirstMonthLabel').textContent = monthCap + ' 2026';
+            document.getElementById('heroPctYTD').textContent = pctYTD + '%';
+            document.getElementById('heroPctMonth').textContent = pctMonth + '%';
+            document.getElementById('heroPctMonthLabel').textContent = monthCap + ' 2026';
+            document.getElementById('heroTotalYTD').textContent = totalMeetingsYTD;
+            document.getElementById('heroTotalMonth').textContent = totalMeetingsMonth;
+            document.getElementById('heroTotalMonthLabel').textContent = monthCap + ' 2026';
         }
 
         // RENDER CHARTS
