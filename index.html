@@ -1,0 +1,3068 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scorecard SDR Dashboard - v7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #60a5fa;
+            --sidebar-bg: #0f172a;
+            --content-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --neutral-100: #f1f5f9;
+            --neutral-200: #e2e8f0;
+            --neutral-300: #cbd5e1;
+        }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--content-bg);
+            color: var(--text-primary);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .container-main {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(135deg, var(--sidebar-bg) 0%, #1a2341 100%);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 16px;
+        }
+
+        .sidebar-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-version {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 2px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+            border-left-color: white;
+        }
+
+        .sidebar-footer {
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* MAIN CONTENT */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .data-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            background: var(--neutral-100);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .last-update {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .view-section {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .view-section.active {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* CONTROLS */
+        .controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .control-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        select:hover {
+            border-color: var(--primary-color);
+            background: var(--neutral-100);
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* KPI GRID */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .kpi-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kpi-change {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .kpi-change.positive {
+            color: var(--success-color);
+        }
+
+        .kpi-change.negative {
+            color: var(--danger-color);
+        }
+
+        .change-icon {
+            font-size: 16px;
+        }
+
+        .sparkline-container {
+            width: 60px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        /* CHARTS */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        /* TABLES */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .table-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: var(--neutral-100);
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover {
+            background: var(--neutral-100);
+        }
+
+        .sdr-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .metric-cell {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #047857;
+        }
+
+        .badge.info {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #b45309;
+        }
+
+        .badge.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+        }
+
+        /* EXECUTIVE VIEW */
+        .exec-health {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+        }
+
+        .exec-signal {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .exec-briefing-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .exec-signal-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .exec-signal-icon.green { background: rgba(16,185,129,0.15); color: #047857; }
+        .exec-signal-icon.yellow { background: rgba(245,158,11,0.15); color: #b45309; }
+        .exec-signal-icon.red { background: rgba(239,68,68,0.15); color: #991b1b; }
+
+        .exec-signal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .exec-signal-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .exec-mini-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .exec-mini {
+            background: var(--neutral-100);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .exec-mini-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
+        }
+
+        .exec-mini-val {
+            font-size: 18px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .exec-mini-cmp {
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .exec-insights {
+            flex: 1;
+        }
+
+        .exec-insight-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .exec-insight-item {
+            font-size: 13px;
+            color: var(--text-primary);
+            padding: 7px 0;
+            border-bottom: 1px solid var(--neutral-100);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.4;
+        }
+
+        .exec-insight-item:last-child { border-bottom: none; }
+
+        .exec-insight-icon {
+            flex-shrink: 0;
+            margin-top: 2px;
+            font-size: 12px;
+        }
+
+        .exec-kpi-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .exec-kpi-row {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: 200px 1fr 120px 120px 120px;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .exec-kpi-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .exec-kpi-bar {
+            height: 8px;
+            background: var(--neutral-100);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .exec-kpi-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .exec-kpi-val {
+            font-size: 15px;
+            font-weight: 700;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .exec-kpi-cmp {
+            font-size: 12px;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .exec-kpi-cmp.up { color: var(--success-color); }
+        .exec-kpi-cmp.down { color: var(--danger-color); }
+        .exec-kpi-cmp.flat { color: var(--text-light); }
+
+        .exec-pace-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+        }
+
+        .exec-pace-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .exec-pace-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .exec-pace-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .exec-pace-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .exec-pace-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .exec-pace-detail {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .exec-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .exec-section-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        /* AE / PIPELINE VIEW */
+        .funnel-container {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .funnel-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 16px 0;
+        }
+
+        .funnel-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: 160px;
+        }
+
+        .funnel-bar {
+            width: 100%;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+            transition: all 0.3s;
+            min-height: 48px;
+        }
+
+        .funnel-stage-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-top: 8px;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+
+        .funnel-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 4px;
+            color: var(--text-light);
+        }
+
+        .funnel-arrow-pct {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .funnel-arrow i {
+            font-size: 14px;
+        }
+
+        .ae-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .ae-metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .ae-metric-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 6px;
+        }
+
+        .ae-metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ae-metric-sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .ae-speed-track {
+            display: flex;
+            align-items: center;
+            background: var(--neutral-100);
+            border-radius: 20px;
+            height: 40px;
+            position: relative;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .ae-speed-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            white-space: nowrap;
+            min-width: 30px;
+        }
+
+        .ae-handoff-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        /* RAISING THE BAR — Spirit View */
+        .spirit-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            border-radius: 16px;
+            padding: 32px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .spirit-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .spirit-header p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .spirit-motto {
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 14px 24px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .spirit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .spirit-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .spirit-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spirit-metric-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--neutral-200);
+        }
+
+        .spirit-metric-row:last-child { border-bottom: none; }
+
+        .spirit-label {
+            width: 130px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .spirit-bar-track {
+            flex: 1;
+            height: 28px;
+            background: var(--neutral-100);
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spirit-bar-fill {
+            height: 100%;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            min-width: 40px;
+            transition: width 0.6s ease;
+        }
+
+        .spirit-bar-avg {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: #0f172a;
+            z-index: 5;
+        }
+
+        .spirit-bar-avg::after {
+            content: attr(data-label);
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .spirit-value {
+            width: 60px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .spirit-table-wrap {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .team-avg-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--neutral-100);
+            border: 1px solid var(--neutral-200);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .team-avg-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #0f172a;
+        }
+
+        .spirit-full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1400px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                width: 240px;
+                height: 100vh;
+                z-index: 1000;
+            }
+
+            .header {
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-main">
+        <!-- SIDEBAR -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">SDR</div>
+                <div>
+                    <div class="sidebar-title">Dashboard</div>
+                    <div class="sidebar-version">v7.1</div>
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-item active" data-view="executive">
+                    <i class="fas fa-gauge-high"></i> Resumen Ejecutivo
+                </div>
+                <div class="nav-item" data-view="dashboard">
+                    <i class="fas fa-chart-line"></i> Operaciones
+                </div>
+                <div class="nav-item" data-view="analisis">
+                    <i class="fas fa-bar-chart"></i> Análisis
+                </div>
+                <div class="nav-item" data-view="ae">
+                    <i class="fas fa-funnel-dollar"></i> AE / Pipeline
+                </div>
+                <div class="nav-item" data-view="spirit">
+                    <i class="fas fa-trophy"></i> Raising the Bar
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div>© 2026 SDR Scorecard</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="content-area">
+            <!-- HEADER -->
+            <div class="header">
+                <div>
+                    <h1 class="header-title">SDR Scorecard Dashboard</h1>
+                </div>
+                <div class="header-controls">
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>Período</label>
+                            <select id="monthSelect">
+                                <option value="abr-2026" selected>Abril 2026</option>
+                                <option value="mar-2026">Marzo 2026</option>
+                                <option value="feb-2026">Febrero 2026</option>
+                                <option value="ene-2026">Enero 2026</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>SDR</label>
+                            <select id="sdrSelect">
+                                <option value="todos" selected>Todos</option>
+                                <option value="agustina">Agustina Avila</option>
+                                <option value="nicole">Nicole Alarcón</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="data-info">
+                        📅 Datos hasta: <strong>10/04/2026</strong>
+                    </div>
+                    <div class="last-update">
+                        <i class="fas fa-sync-alt"></i> <span id="lastUpdate">Actualizado hace 1 min</span>
+                    </div>
+                    <div class="user-avatar">AD</div>
+                </div>
+            </div>
+
+            <!-- EXECUTIVE VIEW (default) -->
+            <div class="view-section active" id="executive-view">
+                <!-- HEALTH SIGNAL + KEY METRICS -->
+                <div class="exec-health">
+                    <div class="exec-signal" id="execSignal"></div>
+                    <div>
+                        <div class="exec-section-title">Variables Clave — Ritmo Semanal</div>
+                        <div class="exec-section-sub">Cada métrica normalizada por semanas trabajadas. Barra = % del objetivo.</div>
+                        <div class="exec-kpi-rows" id="execKpiRows"></div>
+                    </div>
+                </div>
+
+                <!-- PACE & FORECAST -->
+                <div class="exec-pace-card">
+                    <div class="exec-pace-title"><i class="fas fa-forward" style="margin-right:6px;"></i> Proyección Cierre de Mes</div>
+                    <div class="exec-pace-grid" id="execPaceGrid"></div>
+                </div>
+
+                <!-- SDR SUMMARY TABLE -->
+                <div class="table-container">
+                    <div class="table-title">Resumen por SDR — Mes Actual vs Promedio Equipo</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SDR</th>
+                                <th>Act/Día Efectivo</th>
+                                <th>vs Prom. Equipo</th>
+                                <th>Contactabilidad</th>
+                                <th>Reuniones/Sem</th>
+                                <th>Pipeline/Sem</th>
+                                <th>Speed-to-Lead</th>
+                                <th>Empresas Nuevas</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="execSdrTable"></tbody>
+                    </table>
+                </div>
+
+                <!-- EXEC CHARTS -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">Ritmo Semanal — Evolución 4 Meses</div>
+                        <canvas id="execTrendChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Eficiencia — Contactabilidad vs Conversión</div>
+                        <canvas id="execEfficiencyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD / OPERACIONES VIEW -->
+            <div class="view-section" id="dashboard-view">
+                <!-- KPI CARDS -->
+                <div id="kpiGrid" class="kpi-grid"></div>
+
+                <!-- CHARTS -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">Actividades por Tipo</div>
+                        <canvas id="activitiesChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Tendencia de Actividades</div>
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- TABLE -->
+                <div class="table-container">
+                    <div class="table-title">Desglose Semanal</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SDR</th>
+                                <th>Semana</th>
+                                <th>Llamadas</th>
+                                <th>Emails</th>
+                                <th>Nurturing</th>
+                                <th>Reuniones</th>
+                                <th>Total Act.</th>
+                                <th>Act/Día</th>
+                                <th>Reun%</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ANALYSIS VIEW -->
+            <div class="view-section" id="analisis-view">
+                <!-- ANALISIS KPI CARDS -->
+                <div id="analisisKpiGrid" class="kpi-grid"></div>
+
+                <!-- ANALISIS CHARTS -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">Comparación de Actividades por Mes</div>
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Tasa de Conversión (Reuniones/Actividades)</div>
+                        <canvas id="conversionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- SEMANAS TABLE -->
+                <div class="table-container">
+                    <div class="table-title">Desglose de Todas las Semanas</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SDR</th>
+                                <th>Mes</th>
+                                <th>Semana</th>
+                                <th>Llamadas</th>
+                                <th>Emails</th>
+                                <th>Nurturing</th>
+                                <th>Reuniones</th>
+                                <th>Total Act.</th>
+                                <th>Act/Día</th>
+                                <th>Reun%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="semanasTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- AE / PIPELINE VIEW -->
+            <div class="view-section" id="ae-view">
+                <!-- FUNNEL VISUAL -->
+                <div class="funnel-container">
+                    <div class="exec-section-title">Funnel de Ventas — SDR → AE → Cierre</div>
+                    <div class="exec-section-sub">Volumen por etapa y conversión entre stages. Datos del período seleccionado.</div>
+                    <div class="funnel-visual" id="aeFunnel"></div>
+                </div>
+
+                <!-- AE KEY METRICS -->
+                <div class="ae-metrics-grid" id="aeMetrics"></div>
+
+                <!-- SPEED TO DEAL — TIMELINE -->
+                <div class="funnel-container">
+                    <div class="exec-section-title">Velocidad del Ciclo de Venta</div>
+                    <div class="exec-section-sub">Días promedio en cada etapa. Total = Speed-to-Deal desde MQL hasta cierre.</div>
+                    <div id="aeSpeedTrack"></div>
+                    <div id="aeSpeedDetails" style="margin-top:16px;"></div>
+                </div>
+
+                <!-- SDR → AE HANDOFF TABLE -->
+                <div class="funnel-container">
+                    <div class="exec-section-title">Handoff SDR → AE</div>
+                    <div class="exec-section-sub">Cómo convierte cada fuente SDR a través del pipeline. Siempre con promedio equipo.</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fuente SDR</th>
+                                <th>MQLs Enviados</th>
+                                <th>Reuniones Cualif.</th>
+                                <th>Conv. MQL→Reunión</th>
+                                <th>Deals Ganados</th>
+                                <th>Revenue Won</th>
+                                <th>Conv. MQL→Won</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aeHandoffTable"></tbody>
+                    </table>
+                </div>
+
+                <!-- PIPELINE & TREND CHARTS -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">Pipeline Value — Evolución Mensual</div>
+                        <canvas id="aePipelineChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Conversión por Etapa — Tendencia</div>
+                        <canvas id="aeConversionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAISING THE BAR — SPIRIT VIEW -->
+            <div class="view-section" id="spirit-view">
+                <!-- HEADER BANNER -->
+                <div class="spirit-header">
+                    <div>
+                        <h2>Raising the Bar</h2>
+                        <p>Competencia sana — cada SDR vs promedio de equipo</p>
+                    </div>
+                    <div class="spirit-motto">
+                        "El equipo sube junto — cada mejora individual eleva el promedio"
+                    </div>
+                </div>
+
+                <!-- BAR COMPARISON CARDS -->
+                <div class="spirit-grid">
+                    <div class="spirit-card">
+                        <div class="spirit-card-title"><i class="fas fa-bolt"></i> Actividades / Día Op.</div>
+                        <div id="spiritActDay"></div>
+                    </div>
+                    <div class="spirit-card">
+                        <div class="spirit-card-title"><i class="fas fa-phone"></i> Llamadas / Semana</div>
+                        <div id="spiritCalls"></div>
+                    </div>
+                    <div class="spirit-card">
+                        <div class="spirit-card-title"><i class="fas fa-envelope"></i> Emails / Semana</div>
+                        <div id="spiritEmails"></div>
+                    </div>
+                    <div class="spirit-card">
+                        <div class="spirit-card-title"><i class="fas fa-handshake"></i> Reuniones / Semana</div>
+                        <div id="spiritMeetings"></div>
+                    </div>
+                </div>
+
+                <!-- NEW: EXTENDED SPIRIT CARDS -->
+                <div class="spirit-grid">
+                    <div class="spirit-card">
+                        <div class="spirit-card-title"><i class="fas fa-signal"></i> % Contactabilidad</div>
+                        <div id="spiritContact"></div>
+                    </div>
+                    <div class="spirit-card">
+                        <div class="spirit-card-title"><i class="fas fa-euro-sign"></i> Pipeline Generado / Semana</div>
+                        <div id="spiritPipeline"></div>
+                    </div>
+                    <div class="spirit-card">
+                        <div class="spirit-card-title"><i class="fas fa-clock"></i> Speed-to-Lead (horas)</div>
+                        <div id="spiritSpeed"></div>
+                    </div>
+                    <div class="spirit-card">
+                        <div class="spirit-card-title"><i class="fas fa-building"></i> % Empresas Nuevas</div>
+                        <div id="spiritNewCo"></div>
+                    </div>
+                </div>
+
+                <!-- TEAM RADAR & TREND -->
+                <div class="spirit-grid">
+                    <div class="chart-container" style="height:420px;">
+                        <div class="chart-title">Perfil de Equipo — Radar <span class="team-avg-badge"><span class="dot"></span> Promedio equipo</span></div>
+                        <canvas id="spiritRadarChart"></canvas>
+                    </div>
+                    <div class="chart-container" style="height:420px;">
+                        <div class="chart-title">Evolución vs Promedio Equipo</div>
+                        <canvas id="spiritEvolutionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- SPIRIT SCOREBOARD TABLE -->
+                <div class="spirit-table-wrap spirit-full-width">
+                    <div class="table-title">Scoreboard — Variables Clave vs Promedio Equipo</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>SDR</th>
+                                <th>Período</th>
+                                <th>Act/Día</th>
+                                <th>vs</th>
+                                <th>Contact%</th>
+                                <th>vs</th>
+                                <th>Reuniones</th>
+                                <th>vs</th>
+                                <th>Pipeline</th>
+                                <th>vs</th>
+                                <th>Speed</th>
+                                <th>vs</th>
+                                <th>%Nuevas</th>
+                                <th>vs</th>
+                                <th>Spirit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spiritTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sdrData = {
+            'agustina': {
+                name: 'Agustina Avila',
+                color: '#3b82f6',
+                data: {
+                    'ene-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 2, dateRange: '05/01-09/01', calls: 210, emails: 180, nurturing: 95, meetings: 8, actDay: 36.8, callsConn: 38, emailsRepl: 27, uniqueCo: 42, contacts: 68, pipeline: 12500, speedToLead: 2.1, newCo: 30, existCo: 12 },
+                            { week: 2, isoWeek: 3, dateRange: '12/01-16/01', calls: 215, emails: 185, nurturing: 98, meetings: 8, actDay: 37.6, callsConn: 40, emailsRepl: 29, uniqueCo: 45, contacts: 72, pipeline: 15000, speedToLead: 1.8, newCo: 33, existCo: 12 },
+                            { week: 3, isoWeek: 4, dateRange: '19/01-23/01', calls: 220, emails: 190, nurturing: 102, meetings: 9, actDay: 38.4, callsConn: 42, emailsRepl: 30, uniqueCo: 48, contacts: 75, pipeline: 18000, speedToLead: 1.5, newCo: 35, existCo: 13 },
+                            { week: 4, isoWeek: 5, dateRange: '26/01-30/01', calls: 225, emails: 195, nurturing: 105, meetings: 9, actDay: 39.2, callsConn: 44, emailsRepl: 32, uniqueCo: 50, contacts: 80, pipeline: 14000, speedToLead: 1.9, newCo: 36, existCo: 14 }
+                        ]
+                    },
+                    'feb-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 6, dateRange: '02/02-06/02', calls: 230, emails: 200, nurturing: 110, meetings: 9, actDay: 40.0, callsConn: 46, emailsRepl: 34, uniqueCo: 52, contacts: 82, pipeline: 20000, speedToLead: 1.6, newCo: 38, existCo: 14 },
+                            { week: 2, isoWeek: 7, dateRange: '09/02-13/02', calls: 235, emails: 205, nurturing: 115, meetings: 10, actDay: 41.0, callsConn: 48, emailsRepl: 35, uniqueCo: 55, contacts: 86, pipeline: 22000, speedToLead: 1.4, newCo: 40, existCo: 15 },
+                            { week: 3, isoWeek: 8, dateRange: '16/02-20/02', calls: 240, emails: 210, nurturing: 120, meetings: 10, actDay: 42.0, callsConn: 50, emailsRepl: 37, uniqueCo: 57, contacts: 90, pipeline: 19000, speedToLead: 1.3, newCo: 42, existCo: 15 },
+                            { week: 4, isoWeek: 9, dateRange: '23/02-27/02', calls: 245, emails: 215, nurturing: 125, meetings: 11, actDay: 43.0, callsConn: 52, emailsRepl: 39, uniqueCo: 60, contacts: 94, pipeline: 25000, speedToLead: 1.2, newCo: 44, existCo: 16 }
+                        ]
+                    },
+                    'mar-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 10, dateRange: '02/03-06/03', calls: 250, emails: 220, nurturing: 130, meetings: 11, actDay: 44.0, callsConn: 54, emailsRepl: 40, uniqueCo: 62, contacts: 98, pipeline: 28000, speedToLead: 1.1, newCo: 46, existCo: 16 },
+                            { week: 2, isoWeek: 11, dateRange: '09/03-13/03', calls: 255, emails: 225, nurturing: 135, meetings: 12, actDay: 45.0, callsConn: 56, emailsRepl: 42, uniqueCo: 65, contacts: 102, pipeline: 30000, speedToLead: 1.0, newCo: 48, existCo: 17 },
+                            { week: 3, isoWeek: 12, dateRange: '16/03-20/03', calls: 260, emails: 230, nurturing: 140, meetings: 12, actDay: 46.0, callsConn: 58, emailsRepl: 44, uniqueCo: 67, contacts: 105, pipeline: 26000, speedToLead: 1.2, newCo: 50, existCo: 17 },
+                            { week: 4, isoWeek: 13, dateRange: '23/03-27/03', calls: 265, emails: 235, nurturing: 145, meetings: 13, actDay: 47.0, callsConn: 60, emailsRepl: 46, uniqueCo: 70, contacts: 110, pipeline: 32000, speedToLead: 0.9, newCo: 52, existCo: 18 }
+                        ]
+                    },
+                    'abr-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 15, dateRange: '06/04-10/04', calls: 25, emails: 15, nurturing: 10, meetings: 4, actDay: 10.8, daysOp: 5, absences: 0, callsConn: 5, emailsRepl: 3, uniqueCo: 14, contacts: 22, pipeline: 5500, speedToLead: 1.3, newCo: 10, existCo: 4 }
+                        ]
+                    }
+                }
+            },
+            'nicole': {
+                name: 'Nicole Alarcón',
+                color: '#f59e0b',
+                data: {
+                    'ene-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 2, dateRange: '05/01-09/01', calls: 90, emails: 75, nurturing: 45, meetings: 2, actDay: 15.2, callsConn: 14, emailsRepl: 10, uniqueCo: 20, contacts: 30, pipeline: 4000, speedToLead: 3.5, newCo: 12, existCo: 8 },
+                            { week: 2, isoWeek: 3, dateRange: '12/01-16/01', calls: 95, emails: 80, nurturing: 48, meetings: 2, actDay: 16.0, callsConn: 16, emailsRepl: 12, uniqueCo: 22, contacts: 33, pipeline: 5000, speedToLead: 3.2, newCo: 14, existCo: 8 },
+                            { week: 3, isoWeek: 4, dateRange: '19/01-23/01', calls: 100, emails: 85, nurturing: 50, meetings: 3, actDay: 16.8, callsConn: 18, emailsRepl: 14, uniqueCo: 24, contacts: 36, pipeline: 6000, speedToLead: 2.8, newCo: 16, existCo: 8 },
+                            { week: 4, isoWeek: 5, dateRange: '26/01-30/01', calls: 105, emails: 90, nurturing: 52, meetings: 3, actDay: 17.6, callsConn: 20, emailsRepl: 15, uniqueCo: 26, contacts: 38, pipeline: 5500, speedToLead: 2.6, newCo: 17, existCo: 9 }
+                        ]
+                    },
+                    'feb-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 6, dateRange: '02/02-06/02', calls: 110, emails: 95, nurturing: 55, meetings: 3, actDay: 18.4, callsConn: 22, emailsRepl: 16, uniqueCo: 28, contacts: 42, pipeline: 7000, speedToLead: 2.4, newCo: 19, existCo: 9 },
+                            { week: 2, isoWeek: 7, dateRange: '09/02-13/02', calls: 115, emails: 100, nurturing: 58, meetings: 3, actDay: 19.2, callsConn: 24, emailsRepl: 18, uniqueCo: 30, contacts: 45, pipeline: 8000, speedToLead: 2.2, newCo: 21, existCo: 9 },
+                            { week: 3, isoWeek: 8, dateRange: '16/02-20/02', calls: 120, emails: 105, nurturing: 60, meetings: 3, actDay: 20.0, callsConn: 26, emailsRepl: 19, uniqueCo: 32, contacts: 48, pipeline: 7500, speedToLead: 2.0, newCo: 22, existCo: 10 },
+                            { week: 4, isoWeek: 9, dateRange: '23/02-27/02', calls: 125, emails: 110, nurturing: 62, meetings: 4, actDay: 20.8, callsConn: 28, emailsRepl: 20, uniqueCo: 34, contacts: 50, pipeline: 9000, speedToLead: 1.9, newCo: 24, existCo: 10 }
+                        ]
+                    },
+                    'mar-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 10, dateRange: '02/03-06/03', calls: 130, emails: 115, nurturing: 65, meetings: 4, actDay: 21.6, callsConn: 30, emailsRepl: 22, uniqueCo: 36, contacts: 54, pipeline: 10000, speedToLead: 1.8, newCo: 25, existCo: 11 },
+                            { week: 2, isoWeek: 11, dateRange: '09/03-13/03', calls: 135, emails: 120, nurturing: 68, meetings: 4, actDay: 22.4, callsConn: 32, emailsRepl: 24, uniqueCo: 38, contacts: 57, pipeline: 11000, speedToLead: 1.6, newCo: 27, existCo: 11 },
+                            { week: 3, isoWeek: 12, dateRange: '16/03-20/03', calls: 140, emails: 125, nurturing: 70, meetings: 4, actDay: 23.2, callsConn: 34, emailsRepl: 25, uniqueCo: 40, contacts: 60, pipeline: 10500, speedToLead: 1.5, newCo: 28, existCo: 12 },
+                            { week: 4, isoWeek: 13, dateRange: '23/03-27/03', calls: 145, emails: 130, nurturing: 72, meetings: 5, actDay: 24.0, callsConn: 36, emailsRepl: 26, uniqueCo: 42, contacts: 62, pipeline: 12000, speedToLead: 1.4, newCo: 30, existCo: 12 }
+                        ]
+                    },
+                    'abr-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 15, dateRange: '06/04-10/04', calls: 22, emails: 20, nurturing: 12, meetings: 5, actDay: 11.8, daysOp: 5, absences: 0, callsConn: 4, emailsRepl: 4, uniqueCo: 10, contacts: 18, pipeline: 4140, speedToLead: 1.8, newCo: 7, existCo: 3 }
+                        ]
+                    }
+                }
+            }
+        };
+
+        // AE / Pipeline data — simulated from HubSpot deals
+        // AE Pipeline Reditorial — Etapas reales:
+        // Reunión cualif. → Demo plataforma → Prueba gratis → Propuesta → Ok verbal → Ganado
+        const aeData = {
+            'ene-2026': {
+                mqls: 30, reunion: 22, demo: 15, prueba: 10, propuesta: 7, okverbal: 4, won: 2, lost: 3, nurturing: 2,
+                pipelineValue: 85000, wonValue: 9640, avgDealSize: 4820,
+                daysToReunion: 2, daysToDemo: 6, daysToPrueba: 12, daysToPropuesta: 18, daysToOkVerbal: 24, daysToClose: 28,
+                bySDR: {
+                    'agustina': { mqls: 20, reunion: 15, won: 2, wonValue: 9640 },
+                    'nicole': { mqls: 10, reunion: 7, won: 0, wonValue: 0 }
+                }
+            },
+            'feb-2026': {
+                mqls: 35, reunion: 26, demo: 18, prueba: 13, propuesta: 9, okverbal: 5, won: 3, lost: 2, nurturing: 3,
+                pipelineValue: 112000, wonValue: 16520, avgDealSize: 5507,
+                daysToReunion: 1.5, daysToDemo: 5, daysToPrueba: 10, daysToPropuesta: 15, daysToOkVerbal: 20, daysToClose: 24,
+                bySDR: {
+                    'agustina': { mqls: 22, reunion: 17, won: 2, wonValue: 11380 },
+                    'nicole': { mqls: 13, reunion: 9, won: 1, wonValue: 5140 }
+                }
+            },
+            'mar-2026': {
+                mqls: 42, reunion: 32, demo: 22, prueba: 16, propuesta: 12, okverbal: 7, won: 5, lost: 3, nurturing: 4,
+                pipelineValue: 156000, wonValue: 43500, avgDealSize: 8700,
+                daysToReunion: 1, daysToDemo: 4, daysToPrueba: 8, daysToPropuesta: 13, daysToOkVerbal: 18, daysToClose: 21,
+                bySDR: {
+                    'agustina': { mqls: 26, reunion: 20, won: 3, wonValue: 28500 },
+                    'nicole': { mqls: 16, reunion: 12, won: 2, wonValue: 15000 }
+                }
+            },
+            'abr-2026': {
+                mqls: 9, reunion: 6, demo: 3, prueba: 1, propuesta: 0, okverbal: 0, won: 0, lost: 0, nurturing: 1,
+                pipelineValue: 38000, wonValue: 0, avgDealSize: 0,
+                daysToReunion: 1, daysToDemo: 3, daysToPrueba: 0, daysToPropuesta: 0, daysToOkVerbal: 0, daysToClose: 0,
+                bySDR: {
+                    'agustina': { mqls: 5, reunion: 3, won: 0, wonValue: 0 },
+                    'nicole': { mqls: 4, reunion: 3, won: 0, wonValue: 0 }
+                }
+            }
+        };
+
+        let charts = {};
+
+        // UTILITY FUNCTIONS
+        function getCurrentMonth() {
+            return document.getElementById('monthSelect').value || 'abr-2026';
+        }
+
+        function getCurrentSDR() {
+            return document.getElementById('sdrSelect').value || 'todos';
+        }
+
+        function getWeekData(sdrKey, month) {
+            return sdrData[sdrKey]?.data[month]?.weeks || [];
+        }
+
+        function weekLabel(w) {
+            return `W${w.isoWeek} ${w.dateRange}`;
+        }
+
+        function getMonthWeekCount(month) {
+            if (month === 'abr-2026') return 1; // Only 1 week for April 2026
+            return 4; // 4 weeks for previous months
+        }
+
+        function calculateTotalMetrics(month, sdrFilter = 'todos') {
+            let totals = {
+                calls: 0, emails: 0, nurturing: 0, meetings: 0,
+                activities: 0, actDay: 0, daysOp: 0, absences: 0,
+                callsConn: 0, emailsRepl: 0, uniqueCo: 0, contacts: 0,
+                pipeline: 0, speedToLead: 0, newCo: 0, existCo: 0
+            };
+
+            const sdrs = sdrFilter === 'todos' ? ['agustina', 'nicole'] : [sdrFilter];
+            let speedCount = 0;
+
+            sdrs.forEach(sdrKey => {
+                const weeks = getWeekData(sdrKey, month);
+                weeks.forEach(week => {
+                    totals.calls += week.calls;
+                    totals.emails += week.emails;
+                    totals.nurturing += week.nurturing;
+                    totals.meetings += week.meetings;
+                    totals.callsConn += (week.callsConn || 0);
+                    totals.emailsRepl += (week.emailsRepl || 0);
+                    totals.uniqueCo += (week.uniqueCo || 0);
+                    totals.contacts += (week.contacts || 0);
+                    totals.pipeline += (week.pipeline || 0);
+                    totals.newCo += (week.newCo || 0);
+                    totals.existCo += (week.existCo || 0);
+                    if (week.speedToLead) { totals.speedToLead += week.speedToLead; speedCount++; }
+                    if (week.daysOp) totals.daysOp = week.daysOp;
+                    if (week.absences !== undefined) totals.absences = week.absences;
+                });
+            });
+
+            totals.activities = totals.calls + totals.emails + totals.nurturing;
+            totals.speedToLead = speedCount > 0 ? +(totals.speedToLead / speedCount).toFixed(1) : 0;
+
+            if (month === 'abr-2026') {
+                totals.actDay = (totals.activities / (sdrs.length * 5)).toFixed(1);
+            } else {
+                totals.actDay = (totals.activities / (sdrs.length * 20)).toFixed(1);
+            }
+
+            return totals;
+        }
+
+        function getStatusBadge(reunionRate) {
+            if (reunionRate >= 2.5) return { text: 'Excelente', class: 'success' };
+            if (reunionRate >= 2.0) return { text: 'Bueno', class: 'info' };
+            return { text: 'En Mejora', class: 'warning' };
+        }
+
+        function generateSparkline(values) {
+            const max = Math.max(...values);
+            const min = Math.min(...values);
+            const range = max - min;
+
+            return values.map(v => {
+                const normalized = (v - min) / (range || 1);
+                return Math.round(normalized * 100);
+            }).join(',');
+        }
+
+        function generateSparklinePoints(values) {
+            const max = Math.max(...values);
+            const min = Math.min(...values);
+            const range = max - min || 1;
+            const height = 20;
+            const width = 60;
+            
+            return values.map((v, i) => {
+                const x = (i / (values.length - 1 || 1)) * width;
+                const normalized = (v - min) / range;
+                const y = height - (normalized * height);
+                return `${x},${y}`;
+            }).join(' ');
+        }
+
+        // RENDER KPI CARDS
+        function renderKPICards() {
+            const month = getCurrentMonth();
+            const sdrFilter = getCurrentSDR();
+            const metrics = calculateTotalMetrics(month, sdrFilter);
+            const weekCount = getMonthWeekCount(month);
+
+            // Calculated derived metrics
+            const contactability = (metrics.calls + metrics.emails) > 0
+                ? (((metrics.callsConn + metrics.emailsRepl) / (metrics.calls + metrics.emails)) * 100).toFixed(1) : 0;
+            const nurturingPct = metrics.activities > 0
+                ? ((metrics.nurturing / (metrics.activities + metrics.nurturing)) * 100).toFixed(1) : 0;
+            const contactsPerCo = metrics.uniqueCo > 0
+                ? (metrics.contacts / metrics.uniqueCo).toFixed(1) : 0;
+
+            // Previous month for delta comparison
+            const prevMonths = { 'abr-2026': 'mar-2026', 'mar-2026': 'feb-2026', 'feb-2026': 'ene-2026', 'ene-2026': null };
+            const prev = prevMonths[month] ? calculateTotalMetrics(prevMonths[month], sdrFilter) : null;
+            const prevContactability = prev && (prev.calls + prev.emails) > 0
+                ? ((prev.callsConn + prev.emailsRepl) / (prev.calls + prev.emails)) * 100 : 0;
+            const prevNurturingPct = prev && prev.activities > 0
+                ? (prev.nurturing / (prev.activities + prev.nurturing)) * 100 : 0;
+
+            function delta(curr, prevVal) {
+                if (!prevVal || prevVal === 0) return { change: 0, positive: true };
+                const d = ((curr - prevVal) / Math.abs(prevVal) * 100);
+                return { change: Math.abs(d).toFixed(1), positive: d >= 0 };
+            }
+
+            const cards = [
+                {
+                    label: 'Act. Total',
+                    value: metrics.activities,
+                    ...delta(metrics.activities, prev?.activities)
+                },
+                {
+                    label: 'Act/Día Promedio',
+                    value: metrics.actDay,
+                    ...delta(parseFloat(metrics.actDay), prev ? parseFloat(prev.actDay) : 0)
+                },
+                {
+                    label: '% Contactabilidad',
+                    value: contactability + '%',
+                    ...delta(parseFloat(contactability), prevContactability)
+                },
+                {
+                    label: 'Reuniones',
+                    value: metrics.meetings,
+                    ...delta(metrics.meetings, prev?.meetings)
+                },
+                {
+                    label: 'Reun / Act %',
+                    value: metrics.activities > 0 ? ((metrics.meetings / metrics.activities) * 100).toFixed(2) + '%' : '0%',
+                    ...delta(
+                        metrics.activities > 0 ? (metrics.meetings / metrics.activities) * 100 : 0,
+                        prev && prev.activities > 0 ? (prev.meetings / prev.activities) * 100 : 0
+                    )
+                },
+                {
+                    label: '% Nurturing / Total',
+                    value: nurturingPct + '%',
+                    ...delta(parseFloat(nurturingPct), prevNurturingPct)
+                },
+                {
+                    label: 'Empresas Activadas',
+                    value: metrics.uniqueCo,
+                    ...delta(metrics.uniqueCo, prev?.uniqueCo)
+                },
+                {
+                    label: 'Contactos / Empresa',
+                    value: contactsPerCo,
+                    ...delta(parseFloat(contactsPerCo), prev && prev.uniqueCo > 0 ? prev.contacts / prev.uniqueCo : 0)
+                }
+            ];
+
+            const grid = document.getElementById('kpiGrid');
+            grid.innerHTML = cards.map((card, i) => `
+                <div class="kpi-card">
+                    <div class="kpi-label">${card.label}</div>
+                    <div class="kpi-value">${card.value}</div>
+                    <div class="kpi-footer">
+                        <div class="kpi-change ${card.positive ? 'positive' : 'negative'}">
+                            <span class="change-icon">${card.positive ? '↑' : '↓'}</span>
+                            <span>${Math.abs(card.change)}%</span>
+                        </div>
+                        <svg class="sparkline-container" viewBox="0 0 60 20">
+                            <polyline points="${generateSparklinePoints([10 + i*2, 12 + i, 8 + i*3, 15 + i, 11 + i*2])}"
+                                      fill="none" stroke="#3b82f6" stroke-width="2" vector-effect="non-scaling-stroke"/>
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // RENDER CHARTS
+        function renderActivitiesChart() {
+            const month = getCurrentMonth();
+            const sdrFilter = getCurrentSDR();
+            const sdrs = sdrFilter === 'todos' ? ['agustina', 'nicole'] : [sdrFilter];
+
+            const datasets = sdrs.map(sdrKey => {
+                const data = sdrData[sdrKey];
+                const weeks = getWeekData(sdrKey, month);
+                
+                return {
+                    label: data.name,
+                    data: weeks.map(w => w.calls + w.emails + w.nurturing),
+                    backgroundColor: data.color,
+                    borderColor: data.color,
+                    borderRadius: 8,
+                    borderWidth: 0
+                };
+            });
+
+            const weeks = getWeekData(sdrs[0], month);
+            const labels = weeks.map(w => weekLabel(w));
+
+            destroyChart('activitiesChart');
+            charts.activities = new Chart(document.getElementById('activitiesChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { font: { family: 'Inter' }, padding: 20, usePointStyle: true }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0', drawBorder: false },
+                            ticks: { font: { family: 'Inter' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTrendChart() {
+            const month = getCurrentMonth();
+            const sdrFilter = getCurrentSDR();
+            const sdrs = sdrFilter === 'todos' ? ['agustina', 'nicole'] : [sdrFilter];
+
+            const datasets = sdrs.map(sdrKey => {
+                const data = sdrData[sdrKey];
+                const weeks = getWeekData(sdrKey, month);
+                
+                return {
+                    label: data.name,
+                    data: weeks.map(w => w.calls + w.emails + w.nurturing),
+                    borderColor: data.color,
+                    backgroundColor: data.color.replace(')', ', 0.1)').replace('rgb', 'rgba'),
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: data.color,
+                    pointBorderColor: 'white',
+                    pointBorderWidth: 2
+                };
+            });
+
+            const weeks = getWeekData(sdrs[0], month);
+            const labels = weeks.map(w => weekLabel(w));
+
+            destroyChart('trendChart');
+            charts.trend = new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { font: { family: 'Inter' }, padding: 20, usePointStyle: true }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0', drawBorder: false },
+                            ticks: { font: { family: 'Inter' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderComparisonChart() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const agustinaData = months.map(m => calculateTotalMetrics(m, 'agustina').activities);
+            const nicoleData = months.map(m => calculateTotalMetrics(m, 'nicole').activities);
+
+            destroyChart('comparisonChart');
+            charts.comparison = new Chart(document.getElementById('comparisonChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Enero', 'Febrero', 'Marzo', 'Abril'],
+                    datasets: [
+                        {
+                            label: 'Agustina Avila',
+                            data: agustinaData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Nicole Alarcón',
+                            data: nicoleData,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#f59e0b',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { font: { family: 'Inter' }, padding: 20, usePointStyle: true }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0', drawBorder: false },
+                            ticks: { font: { family: 'Inter' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderConversionChart() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const agustinaRates = months.map(m => {
+                const metrics = calculateTotalMetrics(m, 'agustina');
+                return metrics.activities > 0 ? ((metrics.meetings / metrics.activities) * 100).toFixed(2) : 0;
+            });
+            const nicoleRates = months.map(m => {
+                const metrics = calculateTotalMetrics(m, 'nicole');
+                return metrics.activities > 0 ? ((metrics.meetings / metrics.activities) * 100).toFixed(2) : 0;
+            });
+
+            destroyChart('conversionChart');
+            charts.conversion = new Chart(document.getElementById('conversionChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Enero', 'Febrero', 'Marzo', 'Abril'],
+                    datasets: [
+                        {
+                            label: 'Agustina Avila (%)',
+                            data: agustinaRates,
+                            backgroundColor: '#3b82f6',
+                            borderColor: '#3b82f6',
+                            borderRadius: 8,
+                            borderWidth: 0
+                        },
+                        {
+                            label: 'Nicole Alarcón (%)',
+                            data: nicoleRates,
+                            backgroundColor: '#f59e0b',
+                            borderColor: '#f59e0b',
+                            borderRadius: 8,
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { font: { family: 'Inter' }, padding: 20, usePointStyle: true }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0', drawBorder: false },
+                            ticks: { font: { family: 'Inter' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function destroyChart(chartId) {
+            // Support both full id and short key
+            let key = chartId.replace('Chart', '').toLowerCase();
+            if (charts[key]) {
+                charts[key].destroy();
+                delete charts[key];
+            }
+            // Also try exact key
+            if (charts[chartId]) {
+                charts[chartId].destroy();
+                delete charts[chartId];
+            }
+        }
+
+        // ═══════════════════════════════════════════════════
+        // RAISING THE BAR — Spirit render functions
+        // ═══════════════════════════════════════════════════
+
+        function getSpiritMetrics(month) {
+            const sdrs = ['agustina', 'nicole'];
+            const results = {};
+            sdrs.forEach(key => {
+                const weeks = getWeekData(key, month);
+                const totalAct = weeks.reduce((s,w) => s + w.calls + w.emails + w.nurturing, 0);
+                const totalCalls = weeks.reduce((s,w) => s + w.calls, 0);
+                const totalEmails = weeks.reduce((s,w) => s + w.emails, 0);
+                const totalMeetings = weeks.reduce((s,w) => s + w.meetings, 0);
+                const totalCallsConn = weeks.reduce((s,w) => s + (w.callsConn || 0), 0);
+                const totalEmailsRepl = weeks.reduce((s,w) => s + (w.emailsRepl || 0), 0);
+                const totalPipeline = weeks.reduce((s,w) => s + (w.pipeline || 0), 0);
+                const totalNewCo = weeks.reduce((s,w) => s + (w.newCo || 0), 0);
+                const totalExistCo = weeks.reduce((s,w) => s + (w.existCo || 0), 0);
+                const totalUniqueCo = weeks.reduce((s,w) => s + (w.uniqueCo || 0), 0);
+                const totalContacts = weeks.reduce((s,w) => s + (w.contacts || 0), 0);
+                const avgSpeed = weeks.length > 0 ? +(weeks.reduce((s,w) => s + (w.speedToLead || 0), 0) / weeks.length).toFixed(1) : 0;
+                const numWeeks = weeks.length || 1;
+                const daysPerWeek = 5;
+                const totalDays = numWeeks * daysPerWeek;
+                const contactPct = (totalCalls + totalEmails) > 0 ? +(((totalCallsConn + totalEmailsRepl) / (totalCalls + totalEmails)) * 100).toFixed(1) : 0;
+                const newCoPct = (totalNewCo + totalExistCo) > 0 ? +((totalNewCo / (totalNewCo + totalExistCo)) * 100).toFixed(1) : 0;
+                results[key] = {
+                    name: sdrData[key].name,
+                    color: sdrData[key].color,
+                    actDay: totalDays > 0 ? +(totalAct / totalDays).toFixed(1) : 0,
+                    callsWeek: +(totalCalls / numWeeks).toFixed(0),
+                    emailsWeek: +(totalEmails / numWeeks).toFixed(0),
+                    meetingsWeek: +(totalMeetings / numWeeks).toFixed(0),
+                    reunPct: totalAct > 0 ? +((totalMeetings / totalAct) * 100).toFixed(2) : 0,
+                    contactPct,
+                    pipelineWeek: +(totalPipeline / numWeeks).toFixed(0),
+                    speedToLead: avgSpeed,
+                    newCoPct,
+                    uniqueCo: totalUniqueCo,
+                    contactsPerCo: totalUniqueCo > 0 ? +(totalContacts / totalUniqueCo).toFixed(1) : 0,
+                    totalAct
+                };
+            });
+            const keys = Object.keys(results);
+            function teamAvg(metric) { return +(keys.reduce((s,k) => s + results[k][metric], 0) / keys.length).toFixed(metric === 'pipelineWeek' || metric === 'callsWeek' || metric === 'emailsWeek' || metric === 'meetingsWeek' ? 0 : 1); }
+            const avg = {
+                actDay: teamAvg('actDay'),
+                callsWeek: teamAvg('callsWeek'),
+                emailsWeek: teamAvg('emailsWeek'),
+                meetingsWeek: teamAvg('meetingsWeek'),
+                reunPct: teamAvg('reunPct'),
+                contactPct: teamAvg('contactPct'),
+                pipelineWeek: teamAvg('pipelineWeek'),
+                speedToLead: teamAvg('speedToLead'),
+                newCoPct: teamAvg('newCoPct'),
+                uniqueCo: teamAvg('uniqueCo'),
+                contactsPerCo: teamAvg('contactsPerCo')
+            };
+            return { sdrs: results, avg };
+        }
+
+        function renderSpiritBars() {
+            const month = getCurrentMonth();
+            const { sdrs, avg } = getSpiritMetrics(month);
+            const keys = Object.keys(sdrs);
+
+            function buildBars(containerId, metricKey, maxVal, lowerIsBetter = false) {
+                const el = document.getElementById(containerId);
+                if (!el) return;
+                const avgVal = avg[metricKey];
+                const actualMax = Math.max(maxVal, ...keys.map(k => sdrs[k][metricKey]), avgVal) * 1.15;
+                const avgPct = (avgVal / actualMax) * 100;
+
+                let html = '';
+                keys.forEach(k => {
+                    const val = sdrs[k][metricKey];
+                    const pct = Math.min((val / actualMax) * 100, 100);
+                    const aboveAvg = lowerIsBetter ? val <= avgVal : val >= avgVal;
+                    const barColor = aboveAvg ? sdrs[k].color : '#94a3b8';
+                    html += `
+                        <div class="spirit-metric-row">
+                            <div class="spirit-label">${sdrs[k].name.split(' ')[0]}</div>
+                            <div class="spirit-bar-track">
+                                <div class="spirit-bar-fill" style="width:${pct}%;background:${barColor};">${val}</div>
+                                <div class="spirit-bar-avg" style="left:${avgPct}%;" data-label="Prom: ${avgVal}"></div>
+                            </div>
+                            <div class="spirit-value" style="color:${aboveAvg ? 'var(--success-color)' : 'var(--danger-color)'}">
+                                ${(val - avgVal) >= 0 ? '+' : ''}${(val - avgVal).toFixed(metricKey === 'actDay' || metricKey === 'reunPct' ? 1 : 0)}
+                            </div>
+                        </div>
+                    `;
+                });
+                // Team average row
+                html += `
+                    <div class="spirit-metric-row" style="opacity:0.6;">
+                        <div class="spirit-label"><span class="team-avg-badge"><span class="dot"></span> Equipo</span></div>
+                        <div class="spirit-bar-track">
+                            <div class="spirit-bar-fill" style="width:${avgPct}%;background:#0f172a;">${avgVal}</div>
+                        </div>
+                        <div class="spirit-value" style="color:var(--text-secondary);">base</div>
+                    </div>
+                `;
+                el.innerHTML = html;
+            }
+
+            buildBars('spiritActDay', 'actDay', 50);
+            buildBars('spiritCalls', 'callsWeek', 300);
+            buildBars('spiritEmails', 'emailsWeek', 250);
+            buildBars('spiritMeetings', 'meetingsWeek', 15);
+            buildBars('spiritContact', 'contactPct', 30);
+            buildBars('spiritPipeline', 'pipelineWeek', 35000);
+            buildBars('spiritSpeed', 'speedToLead', 4, true);
+            buildBars('spiritNewCo', 'newCoPct', 100);
+        }
+
+        function renderSpiritRadar() {
+            const month = getCurrentMonth();
+            const { sdrs, avg } = getSpiritMetrics(month);
+            const keys = Object.keys(sdrs);
+
+            const labels = ['Act/Día', 'Contactabilidad', 'Reuniones', 'Pipeline', 'Empresas Nuevas', 'Speed-to-Lead'];
+            const maxVals = {
+                actDay: Math.max(50, ...keys.map(k => sdrs[k].actDay)),
+                contactPct: Math.max(30, ...keys.map(k => sdrs[k].contactPct)),
+                meetingsWeek: Math.max(15, ...keys.map(k => sdrs[k].meetingsWeek)),
+                pipelineWeek: Math.max(35000, ...keys.map(k => sdrs[k].pipelineWeek)),
+                newCoPct: Math.max(80, ...keys.map(k => sdrs[k].newCoPct)),
+                speedToLead: Math.max(4, ...keys.map(k => sdrs[k].speedToLead))
+            };
+
+            function norm(val, max) { return +((val / max) * 100).toFixed(1); }
+            function normInv(val, max) { return +(((max - val) / max) * 100).toFixed(1); } // lower is better
+
+            const datasets = keys.map(k => ({
+                label: sdrs[k].name,
+                data: [
+                    norm(sdrs[k].actDay, maxVals.actDay),
+                    norm(sdrs[k].contactPct, maxVals.contactPct),
+                    norm(sdrs[k].meetingsWeek, maxVals.meetingsWeek),
+                    norm(sdrs[k].pipelineWeek, maxVals.pipelineWeek),
+                    norm(sdrs[k].newCoPct, maxVals.newCoPct),
+                    normInv(sdrs[k].speedToLead, maxVals.speedToLead)
+                ],
+                borderColor: sdrs[k].color,
+                backgroundColor: sdrs[k].color + '26',
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: sdrs[k].color
+            }));
+
+            // Add team average as dashed line
+            datasets.push({
+                label: 'Promedio Equipo',
+                data: [
+                    norm(avg.actDay, maxVals.actDay),
+                    norm(avg.contactPct, maxVals.contactPct),
+                    norm(avg.meetingsWeek, maxVals.meetingsWeek),
+                    norm(avg.pipelineWeek, maxVals.pipelineWeek),
+                    norm(avg.newCoPct, maxVals.newCoPct),
+                    normInv(avg.speedToLead, maxVals.speedToLead)
+                ],
+                borderColor: '#0f172a',
+                backgroundColor: 'rgba(15,23,42,0.05)',
+                borderWidth: 2,
+                borderDash: [6, 4],
+                pointRadius: 3,
+                pointBackgroundColor: '#0f172a'
+            });
+
+            destroyChart('spiritRadarChart');
+            charts.spiritradar = new Chart(document.getElementById('spiritRadarChart'), {
+                type: 'radar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { font: { family: 'Inter', size: 12 }, padding: 16, usePointStyle: true }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { display: false },
+                            grid: { color: '#e2e8f0' },
+                            pointLabels: { font: { family: 'Inter', size: 12, weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderSpiritEvolution() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const monthLabels = ['Enero', 'Febrero', 'Marzo', 'Abril'];
+            const sdrs = ['agustina', 'nicole'];
+
+            const datasets = sdrs.map(key => ({
+                label: sdrData[key].name,
+                data: months.map(m => getSpiritMetrics(m).sdrs[key].actDay),
+                borderColor: sdrData[key].color,
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 5,
+                pointBackgroundColor: sdrData[key].color,
+                pointBorderColor: 'white',
+                pointBorderWidth: 2
+            }));
+
+            // Add team average line
+            datasets.push({
+                label: 'Promedio Equipo',
+                data: months.map(m => getSpiritMetrics(m).avg.actDay),
+                borderColor: '#0f172a',
+                backgroundColor: 'rgba(15,23,42,0.08)',
+                borderWidth: 3,
+                borderDash: [8, 4],
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#0f172a',
+                pointBorderColor: 'white',
+                pointBorderWidth: 2
+            });
+
+            destroyChart('spiritEvolutionChart');
+            charts.spiritevolution = new Chart(document.getElementById('spiritEvolutionChart'), {
+                type: 'line',
+                data: { labels: monthLabels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { font: { family: 'Inter' }, padding: 16, usePointStyle: true }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Act / Día Op.', font: { family: 'Inter', weight: '600' } },
+                            grid: { color: '#e2e8f0', drawBorder: false },
+                            ticks: { font: { family: 'Inter' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderSpiritTable() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const monthNames = { 'ene-2026': 'Enero', 'feb-2026': 'Febrero', 'mar-2026': 'Marzo', 'abr-2026': 'Abril' };
+            const sdrs = ['agustina', 'nicole'];
+
+            function deltaHtml(val, avg, decimals = 0) {
+                const diff = val - avg;
+                const sign = diff >= 0 ? '+' : '';
+                const color = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                return `<span style="color:${color};font-weight:600;font-size:12px;">${sign}${diff.toFixed(decimals)}</span>`;
+            }
+
+            function spiritEmoji(d, avg) {
+                let above = 0;
+                if (d.actDay >= avg.actDay) above++;
+                if (d.contactPct >= avg.contactPct) above++;
+                if (d.meetingsWeek >= avg.meetingsWeek) above++;
+                if (d.pipelineWeek >= avg.pipelineWeek) above++;
+                if (d.speedToLead <= avg.speedToLead) above++; // lower = better
+                if (d.newCoPct >= avg.newCoPct) above++;
+                if (above >= 5) return '<span class="badge success">On Fire</span>';
+                if (above >= 4) return '<span class="badge info">Strong</span>';
+                if (above >= 3) return '<span class="badge warning">Growing</span>';
+                return '<span class="badge danger">Push</span>';
+            }
+
+            function deltaInvHtml(val, avg, decimals = 1) {
+                const diff = avg - val; // inverted: lower is better
+                const sign = diff >= 0 ? '+' : '';
+                const color = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                return `<span style="color:${color};font-weight:600;font-size:12px;">${sign}${diff.toFixed(decimals)}</span>`;
+            }
+
+            let rows = '';
+            months.forEach(m => {
+                const { sdrs: sdrMetrics, avg } = getSpiritMetrics(m);
+                sdrs.forEach(k => {
+                    const d = sdrMetrics[k];
+                    rows += `<tr>
+                        <td class="sdr-name">${d.name}</td>
+                        <td>${monthNames[m]}</td>
+                        <td class="metric-cell">${d.actDay}</td>
+                        <td class="metric-cell">${deltaHtml(d.actDay, avg.actDay, 1)}</td>
+                        <td class="metric-cell">${d.contactPct}%</td>
+                        <td class="metric-cell">${deltaHtml(d.contactPct, avg.contactPct, 1)}</td>
+                        <td class="metric-cell">${d.meetingsWeek}</td>
+                        <td class="metric-cell">${deltaHtml(d.meetingsWeek, avg.meetingsWeek)}</td>
+                        <td class="metric-cell">\u20ac${d.pipelineWeek.toLocaleString()}</td>
+                        <td class="metric-cell">${deltaHtml(d.pipelineWeek, avg.pipelineWeek)}</td>
+                        <td class="metric-cell">${d.speedToLead}h</td>
+                        <td class="metric-cell">${deltaInvHtml(d.speedToLead, avg.speedToLead)}</td>
+                        <td class="metric-cell">${d.newCoPct}%</td>
+                        <td class="metric-cell">${deltaHtml(d.newCoPct, avg.newCoPct, 1)}</td>
+                        <td>${spiritEmoji(d, avg)}</td>
+                    </tr>`;
+                });
+                rows += `<tr style="background:var(--neutral-100);font-style:italic;">
+                    <td><span class="team-avg-badge"><span class="dot"></span> Promedio Equipo</span></td>
+                    <td>${monthNames[m]}</td>
+                    <td class="metric-cell">${avg.actDay}</td>
+                    <td class="metric-cell">—</td>
+                    <td class="metric-cell">${avg.contactPct}%</td>
+                    <td class="metric-cell">—</td>
+                    <td class="metric-cell">${avg.meetingsWeek}</td>
+                    <td class="metric-cell">—</td>
+                    <td class="metric-cell">\u20ac${avg.pipelineWeek.toLocaleString()}</td>
+                    <td class="metric-cell">—</td>
+                    <td class="metric-cell">${avg.speedToLead}h</td>
+                    <td class="metric-cell">—</td>
+                    <td class="metric-cell">${avg.newCoPct}%</td>
+                    <td class="metric-cell">—</td>
+                    <td><span class="badge info">Base</span></td>
+                </tr>`;
+            });
+
+            document.getElementById('spiritTableBody').innerHTML = rows;
+        }
+
+        function renderAllSpirit() {
+            renderSpiritBars();
+            renderSpiritRadar();
+            renderSpiritEvolution();
+            renderSpiritTable();
+        }
+
+        // RENDER TABLES
+        function renderWeeklyTable() {
+            const month = getCurrentMonth();
+            const sdrFilter = getCurrentSDR();
+            const sdrs = sdrFilter === 'todos' ? ['agustina', 'nicole'] : [sdrFilter];
+
+            let rows = '';
+            sdrs.forEach(sdrKey => {
+                const data = sdrData[sdrKey];
+                const weeks = data.data[month]?.weeks || [];
+
+                weeks.forEach(week => {
+                    const total = week.calls + week.emails + week.nurturing;
+                    const reunRate = total > 0 ? ((week.meetings / total) * 100).toFixed(2) : 0;
+                    const status = getStatusBadge(parseFloat(reunRate));
+
+                    rows += `
+                        <tr>
+                            <td class="sdr-name">${data.name}</td>
+                            <td>${weekLabel(week)}</td>
+                            <td class="metric-cell">${week.calls}</td>
+                            <td class="metric-cell">${week.emails}</td>
+                            <td class="metric-cell">${week.nurturing}</td>
+                            <td class="metric-cell">${week.meetings}</td>
+                            <td class="metric-cell"><strong>${total}</strong></td>
+                            <td class="metric-cell">${week.actDay}</td>
+                            <td class="metric-cell"><strong>${reunRate}%</strong></td>
+                            <td><span class="badge ${status.class}">${status.text}</span></td>
+                        </tr>
+                    `;
+                });
+            });
+
+            document.getElementById('tableBody').innerHTML = rows;
+        }
+
+        function renderSemanasTable() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const sdrs = ['agustina', 'nicole'];
+            let rows = '';
+
+            months.forEach(month => {
+                sdrs.forEach(sdrKey => {
+                    const data = sdrData[sdrKey];
+                    const weeks = data.data[month]?.weeks || [];
+
+                    weeks.forEach(week => {
+                        const total = week.calls + week.emails + week.nurturing;
+                        const reunRate = total > 0 ? ((week.meetings / total) * 100).toFixed(2) : 0;
+
+                        rows += `
+                            <tr>
+                                <td class="sdr-name">${data.name}</td>
+                                <td>${month === 'ene-2026' ? 'Enero' : month === 'feb-2026' ? 'Febrero' : month === 'mar-2026' ? 'Marzo' : 'Abril'}</td>
+                                <td>${weekLabel(week)}</td>
+                                <td class="metric-cell">${week.calls}</td>
+                                <td class="metric-cell">${week.emails}</td>
+                                <td class="metric-cell">${week.nurturing}</td>
+                                <td class="metric-cell">${week.meetings}</td>
+                                <td class="metric-cell"><strong>${total}</strong></td>
+                                <td class="metric-cell">${week.actDay}</td>
+                                <td class="metric-cell"><strong>${reunRate}%</strong></td>
+                            </tr>
+                        `;
+                    });
+                });
+            });
+
+            document.getElementById('semanasTableBody').innerHTML = rows;
+        }
+
+        // ═══════════════════════════════════════════════════
+        // EXECUTIVE VIEW — Render functions
+        // ═══════════════════════════════════════════════════
+
+        function renderExecutiveView() {
+            const month = getCurrentMonth();
+            const sdrFilter = getCurrentSDR();
+            const prevMonths = { 'abr-2026': 'mar-2026', 'mar-2026': 'feb-2026', 'feb-2026': 'ene-2026', 'ene-2026': null };
+            const prevMonth = prevMonths[month];
+            const monthDisplay = { 'ene-2026': 'Enero', 'feb-2026': 'Febrero', 'mar-2026': 'Marzo', 'abr-2026': 'Abril' };
+            const prevDisplay = prevMonth ? monthDisplay[prevMonth] : null;
+
+            const m = calculateTotalMetrics(month, sdrFilter);
+            const p = prevMonth ? calculateTotalMetrics(prevMonth, sdrFilter) : null;
+            const wk = getMonthWeekCount(month);
+            const pwk = p ? getMonthWeekCount(prevMonth) : 1;
+            const sdrCount = sdrFilter === 'todos' ? 2 : 1;
+
+            // Normalized per-week rates
+            const actPerWeek = wk > 0 ? m.activities / wk : 0;
+            const meetPerWeek = wk > 0 ? m.meetings / wk : 0;
+            const pActPerWeek = p && pwk > 0 ? p.activities / pwk : 0;
+            const pMeetPerWeek = p && pwk > 0 ? p.meetings / pwk : 0;
+            const actPerDay = (wk * 5 * sdrCount) > 0 ? m.activities / (wk * 5 * sdrCount) : 0;
+            const pActPerDay = p && (pwk * 5 * sdrCount) > 0 ? p.activities / (pwk * 5 * sdrCount) : 0;
+            const contactPct = (m.calls + m.emails) > 0 ? (m.callsConn + m.emailsRepl) / (m.calls + m.emails) * 100 : 0;
+            const pContactPct = p && (p.calls + p.emails) > 0 ? (p.callsConn + p.emailsRepl) / (p.calls + p.emails) * 100 : 0;
+            const convPct = m.activities > 0 ? m.meetings / m.activities * 100 : 0;
+            const nurPct = (m.activities + m.nurturing) > 0 ? m.nurturing / (m.activities + m.nurturing) * 100 : 0;
+            const coPerWeek = wk > 0 ? m.uniqueCo / wk : 0;
+            const pipePerWeek = wk > 0 ? m.pipeline / wk : 0;
+
+            // HEALTH SIGNAL — simple: 3+ metrics above prev weekly rate = green
+            let above = 0;
+            if (pActPerWeek > 0 && actPerWeek >= pActPerWeek * 0.95) above++;
+            if (pMeetPerWeek > 0 && meetPerWeek >= pMeetPerWeek * 0.95) above++;
+            if (contactPct >= 10) above++;
+            if (m.speedToLead <= 2.0) above++;
+            if (convPct >= 1.5) above++;
+            const healthColor = above >= 4 ? 'green' : above >= 2 ? 'yellow' : 'red';
+            const healthIcon = above >= 4 ? '✅' : above >= 2 ? '⚠️' : '🔴';
+            const healthText = above >= 4 ? 'On Track' : above >= 2 ? 'Atención' : 'Off Track';
+            const healthDesc = `${wk} de ~4 semanas completadas en ${monthDisplay[month]}`;
+
+            // Generate automatic insights
+            const insights = [];
+            // Best / worst SDR insight
+            const spiritNow = getSpiritMetrics(month);
+            const sdrKeys = Object.keys(spiritNow.sdrs);
+            const bestActDay = sdrKeys.reduce((best, k) => spiritNow.sdrs[k].actDay > spiritNow.sdrs[best].actDay ? k : best, sdrKeys[0]);
+            const bestContact = sdrKeys.reduce((best, k) => spiritNow.sdrs[k].contactPct > spiritNow.sdrs[best].contactPct ? k : best, sdrKeys[0]);
+
+            if (actPerDay >= 30) {
+                insights.push({ icon: '🟢', text: `Ritmo de ${actPerDay.toFixed(1)} act/día supera objetivo de 30` });
+            } else {
+                const gap = ((30 - actPerDay) / 30 * 100).toFixed(0);
+                insights.push({ icon: '🔴', text: `Ritmo de ${actPerDay.toFixed(1)} act/día — ${gap}% debajo del objetivo (30)` });
+            }
+
+            if (pActPerDay > 0) {
+                const actTrend = ((actPerDay - pActPerDay) / pActPerDay * 100).toFixed(1);
+                insights.push({ icon: parseFloat(actTrend) >= 0 ? '📈' : '📉', text: `Act/día ${parseFloat(actTrend) >= 0 ? 'sube' : 'baja'} ${Math.abs(actTrend)}% vs ritmo ${prevDisplay}` });
+            }
+
+            insights.push({ icon: '📞', text: `${spiritNow.sdrs[bestContact].name.split(' ')[0]} lidera contactabilidad (${spiritNow.sdrs[bestContact].contactPct}%)` });
+
+            if (m.speedToLead <= 1.5) {
+                insights.push({ icon: '⚡', text: `Speed-to-lead de ${m.speedToLead}h — respuesta rápida` });
+            } else {
+                insights.push({ icon: '⏳', text: `Speed-to-lead de ${m.speedToLead}h — oportunidad de mejora (<1.5h)` });
+            }
+
+            if (convPct >= 3) {
+                insights.push({ icon: '🎯', text: `Conversión ${convPct.toFixed(1)}% — por encima del 3% objetivo` });
+            } else {
+                insights.push({ icon: '⚠️', text: `Conversión ${convPct.toFixed(1)}% — por debajo del 3% objetivo` });
+            }
+
+            // Pipeline insight
+            const projPipeline = Math.round(pipePerWeek * 4);
+            insights.push({ icon: '💰', text: `Pipeline proyectado: €${projPipeline.toLocaleString()} al cierre de ${monthDisplay[month]}` });
+
+            document.getElementById('execSignal').innerHTML = `
+                <div class="exec-briefing-header">
+                    <div class="exec-signal-icon ${healthColor}">${healthIcon}</div>
+                    <div>
+                        <div class="exec-signal-title">${healthText}</div>
+                        <div class="exec-signal-sub">${healthDesc} · ${above}/5 indicadores en zona</div>
+                    </div>
+                </div>
+                <div class="exec-mini-metrics">
+                    <div class="exec-mini">
+                        <div class="exec-mini-label">Act / Día</div>
+                        <div class="exec-mini-val" style="color:${actPerDay >= 30 ? 'var(--success-color)' : actPerDay >= 20 ? 'var(--warning-color)' : 'var(--danger-color)'};">${actPerDay.toFixed(1)}</div>
+                        <div class="exec-mini-cmp" style="color:var(--text-light);">obj: 30</div>
+                    </div>
+                    <div class="exec-mini">
+                        <div class="exec-mini-label">Contactabilidad</div>
+                        <div class="exec-mini-val" style="color:${contactPct >= 15 ? 'var(--success-color)' : 'var(--warning-color)'};">${contactPct.toFixed(1)}%</div>
+                        <div class="exec-mini-cmp" style="color:var(--text-light);">obj: 20%</div>
+                    </div>
+                    <div class="exec-mini">
+                        <div class="exec-mini-label">Reun / Semana</div>
+                        <div class="exec-mini-val">${meetPerWeek.toFixed(1)}</div>
+                        <div class="exec-mini-cmp" style="color:var(--text-light);">obj: 10</div>
+                    </div>
+                    <div class="exec-mini">
+                        <div class="exec-mini-label">Pipeline / Sem</div>
+                        <div class="exec-mini-val" style="color:var(--primary-color);">€${Math.round(pipePerWeek).toLocaleString()}</div>
+                        <div class="exec-mini-cmp" style="color:var(--text-light);">obj: €25K</div>
+                    </div>
+                </div>
+                <div class="exec-insights">
+                    <div class="exec-insight-title">Conclusiones Clave</div>
+                    ${insights.map(i => `
+                        <div class="exec-insight-item">
+                            <span class="exec-insight-icon">${i.icon}</span>
+                            <span>${i.text}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            // KEY METRICS ROWS
+            const targets = {
+                actPerDay: { target: 30, label: 'Act / Día Efectivo', unit: '', decimals: 1 },
+                contactPct: { target: 20, label: '% Contactabilidad', unit: '%', decimals: 1 },
+                meetPerWeek: { target: 10, label: 'Reuniones / Semana', unit: '', decimals: 1 },
+                convPct: { target: 3, label: 'Tasa Conversión (Reun/Act)', unit: '%', decimals: 2 },
+                coPerWeek: { target: 50, label: 'Empresas Activadas / Semana', unit: '', decimals: 0 },
+                pipePerWeek: { target: 25000, label: 'Pipeline / Semana', unit: '€', decimals: 0 }
+            };
+            const currentVals = { actPerDay, contactPct, meetPerWeek, convPct, coPerWeek, pipePerWeek };
+            const prevVals = {
+                actPerDay: pActPerDay,
+                contactPct: pContactPct,
+                meetPerWeek: pMeetPerWeek,
+                convPct: p && p.activities > 0 ? p.meetings / p.activities * 100 : 0,
+                coPerWeek: p && pwk > 0 ? p.uniqueCo / pwk : 0,
+                pipePerWeek: p && pwk > 0 ? p.pipeline / pwk : 0
+            };
+
+            let rowsHtml = '';
+            for (const [key, cfg] of Object.entries(targets)) {
+                const curr = currentVals[key];
+                const prev = prevVals[key];
+                const pctOfTarget = Math.min((curr / cfg.target) * 100, 100);
+                const barColor = pctOfTarget >= 80 ? 'var(--success-color)' : pctOfTarget >= 50 ? 'var(--warning-color)' : 'var(--danger-color)';
+                const delta = prev > 0 ? ((curr - prev) / prev * 100) : 0;
+                const deltaClass = delta >= 0 ? 'up' : 'down';
+                const deltaSign = delta >= 0 ? '+' : '';
+                const formattedVal = cfg.unit === '€' ? '€' + Math.round(curr).toLocaleString() : curr.toFixed(cfg.decimals) + cfg.unit;
+                const formattedPrev = prev > 0 ? (cfg.unit === '€' ? '€' + Math.round(prev).toLocaleString() : prev.toFixed(cfg.decimals) + cfg.unit) : '—';
+
+                rowsHtml += `
+                    <div class="exec-kpi-row">
+                        <div class="exec-kpi-name">${cfg.label}</div>
+                        <div class="exec-kpi-bar"><div class="exec-kpi-bar-fill" style="width:${pctOfTarget}%;background:${barColor};"></div></div>
+                        <div class="exec-kpi-val">${formattedVal}</div>
+                        <div class="exec-kpi-cmp ${deltaClass}">${deltaSign}${delta.toFixed(1)}% vs ${prevDisplay || '—'}</div>
+                        <div style="font-size:11px;color:var(--text-light);">Obj: ${cfg.unit === '€' ? '€' + cfg.target.toLocaleString() : cfg.target + cfg.unit} | Ant: ${formattedPrev}</div>
+                    </div>
+                `;
+            }
+            document.getElementById('execKpiRows').innerHTML = rowsHtml;
+
+            // PACE & FORECAST
+            const weeksRemaining = Math.max(4 - wk, 0);
+            const projectedAct = Math.round(actPerWeek * 4);
+            const projectedMeet = (meetPerWeek * 4).toFixed(0);
+            const projectedPipeline = Math.round(pipePerWeek * 4);
+            const projectedCo = Math.round(coPerWeek * 4);
+            const pTotalAct = p ? p.activities : 0;
+            const pTotalMeet = p ? p.meetings : 0;
+
+            document.getElementById('execPaceGrid').innerHTML = `
+                <div class="exec-pace-item">
+                    <div class="exec-pace-label">Actividades Proyectadas (mes)</div>
+                    <div class="exec-pace-value" style="color:${projectedAct >= pTotalAct ? 'var(--success-color)' : 'var(--danger-color)'};">${projectedAct.toLocaleString()}</div>
+                    <div class="exec-pace-detail">Actual: ${m.activities} en ${wk} sem. | ${prevDisplay || '—'}: ${pTotalAct} en ${pwk} sem.</div>
+                </div>
+                <div class="exec-pace-item">
+                    <div class="exec-pace-label">Reuniones Proyectadas (mes)</div>
+                    <div class="exec-pace-value" style="color:${projectedMeet >= pTotalMeet ? 'var(--success-color)' : 'var(--danger-color)'};">${projectedMeet}</div>
+                    <div class="exec-pace-detail">Actual: ${m.meetings} en ${wk} sem. | ${prevDisplay || '—'}: ${pTotalMeet} en ${pwk} sem.</div>
+                </div>
+                <div class="exec-pace-item">
+                    <div class="exec-pace-label">Pipeline Proyectado (mes)</div>
+                    <div class="exec-pace-value" style="color:var(--primary-color);">€${projectedPipeline.toLocaleString()}</div>
+                    <div class="exec-pace-detail">Actual: €${m.pipeline.toLocaleString()} en ${wk} sem. | Quedan ${weeksRemaining} sem.</div>
+                </div>
+                <div class="exec-pace-item">
+                    <div class="exec-pace-label">Empresas Proyectadas (mes)</div>
+                    <div class="exec-pace-value">${projectedCo}</div>
+                    <div class="exec-pace-detail">Actual: ${m.uniqueCo} en ${wk} sem. | Ritmo: ${coPerWeek.toFixed(0)}/sem</div>
+                </div>
+            `;
+
+            // SDR TABLE
+            const spirit = getSpiritMetrics(month);
+            let sdrRows = '';
+            for (const [k, d] of Object.entries(spirit.sdrs)) {
+                const avg = spirit.avg;
+                const actDelta = d.actDay - avg.actDay;
+                const actColor = actDelta >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                let statusCount = 0;
+                if (d.actDay >= avg.actDay) statusCount++;
+                if (d.contactPct >= avg.contactPct) statusCount++;
+                if (d.meetingsWeek >= avg.meetingsWeek) statusCount++;
+                if (d.pipelineWeek >= avg.pipelineWeek) statusCount++;
+                if (d.speedToLead <= avg.speedToLead) statusCount++;
+                if (d.newCoPct >= avg.newCoPct) statusCount++;
+                const badge = statusCount >= 5 ? '<span class="badge success">On Fire</span>' :
+                              statusCount >= 3 ? '<span class="badge info">Strong</span>' :
+                              statusCount >= 2 ? '<span class="badge warning">Growing</span>' :
+                              '<span class="badge danger">Push</span>';
+
+                sdrRows += `<tr>
+                    <td class="sdr-name">${d.name}</td>
+                    <td class="metric-cell">${d.actDay}</td>
+                    <td class="metric-cell" style="color:${actColor};font-weight:600;">${actDelta >= 0 ? '+' : ''}${actDelta.toFixed(1)}</td>
+                    <td class="metric-cell">${d.contactPct}%</td>
+                    <td class="metric-cell">${d.meetingsWeek}</td>
+                    <td class="metric-cell">€${d.pipelineWeek.toLocaleString()}</td>
+                    <td class="metric-cell">${d.speedToLead}h</td>
+                    <td class="metric-cell">${d.newCoPct}%</td>
+                    <td>${badge}</td>
+                </tr>`;
+            }
+            // Team avg row
+            const avg = spirit.avg;
+            sdrRows += `<tr style="background:var(--neutral-100);font-style:italic;">
+                <td><span class="team-avg-badge"><span class="dot"></span> Promedio Equipo</span></td>
+                <td class="metric-cell">${avg.actDay}</td>
+                <td class="metric-cell">—</td>
+                <td class="metric-cell">${avg.contactPct}%</td>
+                <td class="metric-cell">${avg.meetingsWeek}</td>
+                <td class="metric-cell">€${avg.pipelineWeek.toLocaleString()}</td>
+                <td class="metric-cell">${avg.speedToLead}h</td>
+                <td class="metric-cell">${avg.newCoPct}%</td>
+                <td><span class="badge info">Base</span></td>
+            </tr>`;
+            document.getElementById('execSdrTable').innerHTML = sdrRows;
+
+            // CHARTS
+            renderExecTrendChart();
+            renderExecEfficiencyChart();
+        }
+
+        function renderExecTrendChart() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const labels = ['Enero', 'Febrero', 'Marzo', 'Abril'];
+            const sdrs = ['agustina', 'nicole'];
+
+            // Weekly rate per SDR
+            const datasets = sdrs.map(key => ({
+                label: sdrData[key].name,
+                data: months.map(m => {
+                    const weeks = getWeekData(key, m);
+                    const nw = weeks.length || 1;
+                    const total = weeks.reduce((s,w) => s + w.calls + w.emails + w.nurturing, 0);
+                    return +(total / (nw * 5)).toFixed(1); // act per day
+                }),
+                borderColor: sdrData[key].color,
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 5,
+                pointBackgroundColor: sdrData[key].color,
+                pointBorderColor: 'white',
+                pointBorderWidth: 2
+            }));
+
+            // Team avg
+            datasets.push({
+                label: 'Promedio Equipo',
+                data: months.map(m => {
+                    const total = sdrs.reduce((sum, key) => {
+                        const weeks = getWeekData(key, m);
+                        const nw = weeks.length || 1;
+                        return sum + weeks.reduce((s,w) => s + w.calls + w.emails + w.nurturing, 0) / (nw * 5);
+                    }, 0);
+                    return +(total / sdrs.length).toFixed(1);
+                }),
+                borderColor: '#0f172a',
+                backgroundColor: 'rgba(15,23,42,0.06)',
+                borderWidth: 3,
+                borderDash: [8, 4],
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#0f172a'
+            });
+
+            // Target line
+            datasets.push({
+                label: 'Objetivo (30 act/día)',
+                data: [30, 30, 30, 30],
+                borderColor: '#ef4444',
+                borderWidth: 2,
+                borderDash: [4, 4],
+                pointRadius: 0,
+                fill: false
+            });
+
+            destroyChart('execTrendChart');
+            charts.exectrend = new Chart(document.getElementById('execTrendChart'), {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { font: { family: 'Inter', size: 11 }, padding: 14, usePointStyle: true } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Act / Día Efectivo', font: { family: 'Inter', weight: '600' } }, grid: { color: '#e2e8f0' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderExecEfficiencyChart() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const labels = ['Enero', 'Febrero', 'Marzo', 'Abril'];
+
+            const contactData = months.map(m => {
+                const met = calculateTotalMetrics(m, 'todos');
+                return (met.calls + met.emails) > 0 ? +((met.callsConn + met.emailsRepl) / (met.calls + met.emails) * 100).toFixed(1) : 0;
+            });
+
+            const convData = months.map(m => {
+                const met = calculateTotalMetrics(m, 'todos');
+                return met.activities > 0 ? +((met.meetings / met.activities) * 100).toFixed(2) : 0;
+            });
+
+            destroyChart('execEfficiencyChart');
+            charts.execefficiency = new Chart(document.getElementById('execEfficiencyChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Contactabilidad %',
+                            data: contactData,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 8,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Conversión (Reun/Act) %',
+                            data: convData,
+                            type: 'line',
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#f59e0b',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { font: { family: 'Inter' }, padding: 14, usePointStyle: true } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Contactabilidad %' }, grid: { color: '#e2e8f0' }, position: 'left' },
+                        y1: { beginAtZero: true, title: { display: true, text: 'Conversión %' }, grid: { display: false }, position: 'right' },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // ═══════════════════════════════════════════════════
+        // AE / PIPELINE — Render functions
+        // ═══════════════════════════════════════════════════
+
+        function renderAEView() {
+            const month = getCurrentMonth();
+            const ae = aeData[month];
+            if (!ae) return;
+            const prevMonths = { 'abr-2026': 'mar-2026', 'mar-2026': 'feb-2026', 'feb-2026': 'ene-2026', 'ene-2026': null };
+            const prev = prevMonths[month] ? aeData[prevMonths[month]] : null;
+
+            // FUNNEL VISUAL — etapas reales AE Pipeline Reditorial
+            const stages = [
+                { label: 'MQLs', val: ae.mqls, color: '#94a3b8' },
+                { label: 'Reunión', val: ae.reunion, color: '#64748b' },
+                { label: 'Demo', val: ae.demo, color: '#3b82f6' },
+                { label: 'Prueba', val: ae.prueba, color: '#8b5cf6' },
+                { label: 'Propuesta', val: ae.propuesta, color: '#f59e0b' },
+                { label: 'Ok Verbal', val: ae.okverbal, color: '#f97316' },
+                { label: 'Ganado', val: ae.won, color: '#10b981' }
+            ];
+            const maxVal = Math.max(...stages.map(s => s.val), 1);
+
+            let funnelHtml = '';
+            stages.forEach((s, i) => {
+                const height = Math.max(Math.round((s.val / maxVal) * 80) + 20, 48);
+                const width = Math.max(100 - i * 9, 40);
+                funnelHtml += `<div class="funnel-stage">
+                    <div class="funnel-bar" style="background:${s.color};height:${height}px;width:${width}%;">${s.val}</div>
+                    <div class="funnel-stage-label">${s.label}</div>
+                </div>`;
+                if (i < stages.length - 1) {
+                    const conv = stages[i].val > 0 ? ((stages[i+1].val / stages[i].val) * 100).toFixed(0) : 0;
+                    funnelHtml += `<div class="funnel-arrow">
+                        <div class="funnel-arrow-pct">${conv}%</div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>`;
+                }
+            });
+            document.getElementById('aeFunnel').innerHTML = funnelHtml;
+
+            // KEY METRICS
+            const winRate = (ae.won + ae.lost) > 0 ? ((ae.won / (ae.won + ae.lost)) * 100).toFixed(1) : '—';
+            const pWinRate = prev && (prev.won + prev.lost) > 0 ? ((prev.won / (prev.won + prev.lost)) * 100).toFixed(1) : null;
+            const totalSpeed = ae.daysToClose || ae.daysToOkVerbal || ae.daysToPropuesta || 0;
+            const pTotalSpeed = prev ? (prev.daysToClose || prev.daysToOkVerbal || prev.daysToPropuesta || 0) : null;
+            const pipeWeighted = ae.pipelineValue * 0.35; // weighted by avg probability
+
+            const metricsHtml = [
+                { label: 'Win Rate', value: winRate + '%', sub: prev ? `Ant: ${pWinRate}%` : '', color: parseFloat(winRate) >= 30 ? 'var(--success-color)' : 'var(--warning-color)' },
+                { label: 'ACV (Avg Deal)', value: ae.avgDealSize > 0 ? '€' + ae.avgDealSize.toLocaleString() : '—', sub: prev ? `Ant: €${prev.avgDealSize.toLocaleString()}` : '', color: 'var(--primary-color)' },
+                { label: 'Revenue Won', value: '€' + ae.wonValue.toLocaleString(), sub: prev ? `Ant: €${prev.wonValue.toLocaleString()}` : '', color: 'var(--success-color)' },
+                { label: 'Pipeline Activo', value: '€' + ae.pipelineValue.toLocaleString(), sub: `Ponderado (~35%): €${Math.round(pipeWeighted).toLocaleString()}`, color: 'var(--text-primary)' },
+                { label: 'Speed-to-Deal', value: totalSpeed > 0 ? totalSpeed + ' días' : 'N/A', sub: pTotalSpeed ? `Ant: ${pTotalSpeed} días` : '', color: totalSpeed <= 25 ? 'var(--success-color)' : 'var(--warning-color)' },
+                { label: 'MQL → Won %', value: ae.mqls > 0 ? ((ae.won / ae.mqls) * 100).toFixed(1) + '%' : '—', sub: 'Conversión completa del funnel', color: 'var(--primary-dark)' }
+            ].map(m => `
+                <div class="ae-metric-card">
+                    <div class="ae-metric-label">${m.label}</div>
+                    <div class="ae-metric-value" style="color:${m.color};">${m.value}</div>
+                    <div class="ae-metric-sub">${m.sub}</div>
+                </div>
+            `).join('');
+            document.getElementById('aeMetrics').innerHTML = metricsHtml;
+
+            // SPEED TIMELINE — etapas reales
+            const speedStages = [
+                { label: 'MQL→Reun.', days: ae.daysToReunion, color: '#64748b' },
+                { label: 'Reun.→Demo', days: Math.max(ae.daysToDemo - ae.daysToReunion, 0), color: '#3b82f6' },
+                { label: 'Demo→Prueba', days: Math.max(ae.daysToPrueba - ae.daysToDemo, 0), color: '#8b5cf6' },
+                { label: 'Prueba→Prop.', days: Math.max(ae.daysToPropuesta - ae.daysToPrueba, 0), color: '#f59e0b' },
+                { label: 'Prop.→Ok', days: Math.max(ae.daysToOkVerbal - ae.daysToPropuesta, 0), color: '#f97316' },
+                { label: 'Ok→Ganado', days: Math.max(ae.daysToClose - ae.daysToOkVerbal, 0), color: '#10b981' }
+            ].filter(s => s.days > 0);
+
+            const totalDays = speedStages.reduce((s, st) => s + st.days, 0) || 1;
+            let trackHtml = '<div class="ae-speed-track">';
+            speedStages.forEach(s => {
+                const pct = (s.days / totalDays * 100).toFixed(1);
+                trackHtml += `<div class="ae-speed-segment" style="width:${pct}%;background:${s.color};">${s.label} ${s.days}d</div>`;
+            });
+            trackHtml += '</div>';
+
+            let detailsHtml = '<div style="display:flex;gap:20px;flex-wrap:wrap;">';
+            speedStages.forEach(s => {
+                detailsHtml += `<div style="font-size:13px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${s.color};margin-right:6px;"></span><strong>${s.label}:</strong> ${s.days} días</div>`;
+            });
+            detailsHtml += `<div style="font-size:13px;font-weight:700;">Total: ${totalDays} días</div></div>`;
+            document.getElementById('aeSpeedTrack').innerHTML = trackHtml;
+            document.getElementById('aeSpeedDetails').innerHTML = detailsHtml;
+
+            // HANDOFF TABLE
+            const sdrs = ['agustina', 'nicole'];
+            let handoffRows = '';
+            let totMqls = 0, totReun = 0, totWon = 0, totRevenue = 0;
+            sdrs.forEach(k => {
+                const h = ae.bySDR[k];
+                const convMqlReun = h.mqls > 0 ? ((h.reunion / h.mqls) * 100).toFixed(1) : '—';
+                const convMqlWon = h.mqls > 0 ? ((h.won / h.mqls) * 100).toFixed(1) : '—';
+                totMqls += h.mqls; totReun += h.reunion; totWon += h.won; totRevenue += h.wonValue;
+                handoffRows += `<tr>
+                    <td class="sdr-name">${sdrData[k].name}</td>
+                    <td class="metric-cell">${h.mqls}</td>
+                    <td class="metric-cell">${h.reunion}</td>
+                    <td class="metric-cell">${convMqlReun}%</td>
+                    <td class="metric-cell">${h.won}</td>
+                    <td class="metric-cell">€${h.wonValue.toLocaleString()}</td>
+                    <td class="metric-cell">${convMqlWon}%</td>
+                </tr>`;
+            });
+            // Team avg row
+            const avgConvReun = totMqls > 0 ? ((totReun / totMqls) * 100).toFixed(1) : '—';
+            const avgConvWon = totMqls > 0 ? ((totWon / totMqls) * 100).toFixed(1) : '—';
+            handoffRows += `<tr style="background:var(--neutral-100);font-style:italic;">
+                <td><span class="team-avg-badge"><span class="dot"></span> Total / Promedio</span></td>
+                <td class="metric-cell">${totMqls}</td>
+                <td class="metric-cell">${totReun}</td>
+                <td class="metric-cell">${avgConvReun}%</td>
+                <td class="metric-cell">${totWon}</td>
+                <td class="metric-cell">€${totRevenue.toLocaleString()}</td>
+                <td class="metric-cell">${avgConvWon}%</td>
+            </tr>`;
+            document.getElementById('aeHandoffTable').innerHTML = handoffRows;
+
+            // CHARTS
+            renderAEPipelineChart();
+            renderAEConversionChart();
+        }
+
+        function renderAEPipelineChart() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const labels = ['Enero', 'Febrero', 'Marzo', 'Abril'];
+
+            destroyChart('aePipelineChart');
+            charts.aepipeline = new Chart(document.getElementById('aePipelineChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Pipeline Activo',
+                            data: months.map(m => aeData[m].pipelineValue),
+                            backgroundColor: 'rgba(59,130,246,0.3)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Revenue Won',
+                            data: months.map(m => aeData[m].wonValue),
+                            backgroundColor: '#10b981',
+                            borderRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { font: { family: 'Inter' }, padding: 14, usePointStyle: true } } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: v => '€' + (v/1000) + 'K' }, grid: { color: '#e2e8f0' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderAEConversionChart() {
+            const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
+            const labels = ['Enero', 'Febrero', 'Marzo', 'Abril'];
+
+            destroyChart('aeConversionChart');
+            charts.aeconversion = new Chart(document.getElementById('aeConversionChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'MQL→Reunión %',
+                            data: months.map(m => aeData[m].mqls > 0 ? +((aeData[m].reunion / aeData[m].mqls) * 100).toFixed(1) : 0),
+                            borderColor: '#64748b',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#64748b'
+                        },
+                        {
+                            label: 'Reunión→Demo %',
+                            data: months.map(m => aeData[m].reunion > 0 ? +((aeData[m].demo / aeData[m].reunion) * 100).toFixed(1) : 0),
+                            borderColor: '#3b82f6',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#3b82f6'
+                        },
+                        {
+                            label: 'Propuesta→Ganado %',
+                            data: months.map(m => aeData[m].propuesta > 0 ? +((aeData[m].won / aeData[m].propuesta) * 100).toFixed(1) : 0),
+                            borderColor: '#10b981',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#10b981'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { font: { family: 'Inter' }, padding: 14, usePointStyle: true } } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: v => v + '%' }, grid: { color: '#e2e8f0' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderAnalisisCards() {
+            const month = getCurrentMonth();
+            const prevMonths = { 'abr-2026': 'mar-2026', 'mar-2026': 'feb-2026', 'feb-2026': 'ene-2026', 'ene-2026': null };
+            const prevMonth = prevMonths[month];
+            const monthNames = { 'ene-2026': 'Ene', 'feb-2026': 'Feb', 'mar-2026': 'Mar', 'abr-2026': 'Abr' };
+            const metrics = calculateTotalMetrics(month, 'todos');
+            const prev = prevMonth ? calculateTotalMetrics(prevMonth, 'todos') : null;
+
+            // Normalize by weeks to compare fairly
+            const currWeeks = getMonthWeekCount(month);
+            const prevWeeks = prev ? getMonthWeekCount(prevMonth) : 1;
+            const currActPerWeek = currWeeks > 0 ? metrics.activities / currWeeks : 0;
+            const prevActPerWeek = prev && prevWeeks > 0 ? prev.activities / prevWeeks : 0;
+            const currMeetPerWeek = currWeeks > 0 ? metrics.meetings / currWeeks : 0;
+            const prevMeetPerWeek = prev && prevWeeks > 0 ? prev.meetings / prevWeeks : 0;
+            const currConvPct = metrics.activities > 0 ? (metrics.meetings / metrics.activities * 100) : 0;
+            const prevConvPct = prev && prev.activities > 0 ? (prev.meetings / prev.activities * 100) : 0;
+            const currContactPct = (metrics.calls + metrics.emails) > 0 ? ((metrics.callsConn + metrics.emailsRepl) / (metrics.calls + metrics.emails) * 100) : 0;
+            const prevContactPct = prev && (prev.calls + prev.emails) > 0 ? ((prev.callsConn + prev.emailsRepl) / (prev.calls + prev.emails) * 100) : 0;
+
+            function pctDelta(curr, previous) {
+                if (!previous || previous === 0) return { val: 0, pos: true };
+                const d = ((curr - previous) / Math.abs(previous)) * 100;
+                return { val: Math.abs(d).toFixed(1), pos: d >= 0 };
+            }
+
+            const actDelta = pctDelta(currActPerWeek, prevActPerWeek);
+            const meetDelta = pctDelta(currMeetPerWeek, prevMeetPerWeek);
+            const convDelta = pctDelta(currConvPct, prevConvPct);
+            const contDelta = pctDelta(currContactPct, prevContactPct);
+            const prevLabel = prev ? monthNames[prevMonth] : '—';
+
+            const cards = [
+                {
+                    label: `Ritmo Semanal Actividades`,
+                    value: Math.round(currActPerWeek),
+                    sub: `${currWeeks} sem. registradas`,
+                    change: actDelta.val,
+                    positive: actDelta.pos,
+                    cmpLabel: `vs ${prevLabel} (${Math.round(prevActPerWeek)}/sem)`
+                },
+                {
+                    label: `Ritmo Semanal Reuniones`,
+                    value: currMeetPerWeek.toFixed(1),
+                    sub: `${metrics.meetings} reuniones en ${currWeeks} sem.`,
+                    change: meetDelta.val,
+                    positive: meetDelta.pos,
+                    cmpLabel: `vs ${prevLabel} (${prevMeetPerWeek.toFixed(1)}/sem)`
+                },
+                {
+                    label: `Tasa Conversión (Reun/Act)`,
+                    value: currConvPct.toFixed(1) + '%',
+                    sub: 'Reuniones por cada 100 actividades',
+                    change: convDelta.val,
+                    positive: convDelta.pos,
+                    cmpLabel: `vs ${prevLabel} (${prevConvPct.toFixed(1)}%)`
+                },
+                {
+                    label: '% Contactabilidad',
+                    value: currContactPct.toFixed(1) + '%',
+                    sub: `${metrics.callsConn} llam. conectadas + ${metrics.emailsRepl} emails resp.`,
+                    change: contDelta.val,
+                    positive: contDelta.pos,
+                    cmpLabel: `vs ${prevLabel} (${prevContactPct.toFixed(1)}%)`
+                }
+            ];
+
+            const grid = document.getElementById('analisisKpiGrid');
+            grid.innerHTML = cards.map(card => `
+                <div class="kpi-card">
+                    <div class="kpi-label">${card.label}</div>
+                    <div class="kpi-value">${card.value}</div>
+                    <div style="font-size:11px;color:var(--text-light);margin-bottom:8px;">${card.sub || ''}</div>
+                    <div class="kpi-footer">
+                        <div class="kpi-change ${card.positive ? 'positive' : 'negative'}">
+                            <span class="change-icon">${card.positive ? '↑' : '↓'}</span>
+                            <span>${card.change}%</span>
+                        </div>
+                        <span style="font-size:11px;color:var(--text-secondary);">${card.cmpLabel}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            // Navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const view = item.getAttribute('data-view');
+                    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+                    document.getElementById(view + '-view').classList.add('active');
+
+                    if (view === 'executive') {
+                        setTimeout(() => renderExecutiveView(), 100);
+                    } else if (view === 'dashboard') {
+                        setTimeout(() => {
+                            renderActivitiesChart();
+                            renderTrendChart();
+                        }, 100);
+                    } else if (view === 'analisis') {
+                        setTimeout(() => {
+                            renderComparisonChart();
+                            renderConversionChart();
+                        }, 100);
+                    } else if (view === 'ae') {
+                        setTimeout(() => renderAEView(), 100);
+                    } else if (view === 'spirit') {
+                        setTimeout(() => {
+                            renderAllSpirit();
+                        }, 100);
+                    }
+                });
+            });
+
+            // Controls
+            document.getElementById('monthSelect').addEventListener('change', () => {
+                renderExecutiveView();
+                renderKPICards();
+                renderActivitiesChart();
+                renderTrendChart();
+                renderWeeklyTable();
+                renderAnalisisCards();
+                renderSpiritBars();
+                renderAEView();
+            });
+
+            document.getElementById('sdrSelect').addEventListener('change', () => {
+                renderExecutiveView();
+                renderKPICards();
+                renderActivitiesChart();
+                renderTrendChart();
+                renderWeeklyTable();
+                renderAnalisisCards();
+            });
+
+            // Initial render — Executive view is default
+            renderExecutiveView();
+            renderKPICards();
+            renderWeeklyTable();
+            renderSemanasTable();
+            renderAnalisisCards();
+
+            // Update timestamp
+            setInterval(() => {
+                const now = new Date();
+                const mins = Math.floor(Math.random() * 5) + 1;
+                document.getElementById('lastUpdate').textContent = `Actualizado hace ${mins} min`;
+            }, 30000);
+        });
+
+        // Responsive sidebar toggle
+        const toggleBtn = document.getElementById('toggleSidebar');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('collapsed');
+            });
+        }
+    </script>
+</body>
+</html>
