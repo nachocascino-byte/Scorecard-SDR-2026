@@ -1198,16 +1198,17 @@
                                 <option value="todos" selected>Todos</option>
                                 <option value="agustina">Agustina Avila</option>
                                 <option value="nicole">Nicole Alarcón</option>
+                                <option value="alberto">Alberto Ramirez</option>
                             </select>
                         </div>
                     </div>
                 </div>
                 <div class="header-right">
                     <div class="data-info">
-                        📅 Datos hasta: <strong>10/04/2026</strong>
+                        📅 Datos hasta: <strong id="datosHastaLabel">—</strong>
                     </div>
                     <div class="last-update">
-                        <i class="fas fa-sync-alt"></i> <span id="lastUpdate">Actualizado hace 1 min</span>
+                        <i class="fas fa-sync-alt"></i> <span id="lastUpdate">Cargado hace 0 min</span>
                     </div>
                     <div class="user-avatar">AD</div>
                 </div>
@@ -1622,6 +1623,21 @@
                         ]
                     }
                 }
+            },
+            'alberto': {
+                name: 'Alberto Ramirez',
+                email: 'alberto@reditorial.es',
+                color: '#8b5cf6',
+                data: {
+                    'ene-2026': { weeks: [] },
+                    'feb-2026': { weeks: [] },
+                    'mar-2026': { weeks: [] },
+                    'abr-2026': {
+                        weeks: [
+                            { week: 1, isoWeek: 15, dateRange: '06/04-10/04', calls: 0, emails: 0, nurturing: 0, meetings: 0, actDay: 0, daysOp: 5, absences: 0, callsConn: 0, emailsRepl: 0, uniqueCo: 0, contacts: 0, pipeline: 0, speedToLead: 0, newCo: 0, existCo: 0 }
+                        ]
+                    }
+                }
             }
         };
 
@@ -1635,7 +1651,8 @@
                 daysToReunion: 2, daysToDemo: 6, daysToPrueba: 12, daysToPropuesta: 18, daysToOkVerbal: 24, daysToClose: 28,
                 bySDR: {
                     'agustina': { mqls: 20, reunion: 15, won: 2, wonValue: 9640 },
-                    'nicole': { mqls: 10, reunion: 7, won: 0, wonValue: 0 }
+                    'nicole': { mqls: 10, reunion: 7, won: 0, wonValue: 0 },
+                    'alberto': { mqls: 0, reunion: 0, won: 0, wonValue: 0 }
                 }
             },
             'feb-2026': {
@@ -1644,7 +1661,8 @@
                 daysToReunion: 1.5, daysToDemo: 5, daysToPrueba: 10, daysToPropuesta: 15, daysToOkVerbal: 20, daysToClose: 24,
                 bySDR: {
                     'agustina': { mqls: 22, reunion: 17, won: 2, wonValue: 11380 },
-                    'nicole': { mqls: 13, reunion: 9, won: 1, wonValue: 5140 }
+                    'nicole': { mqls: 13, reunion: 9, won: 1, wonValue: 5140 },
+                    'alberto': { mqls: 0, reunion: 0, won: 0, wonValue: 0 }
                 }
             },
             'mar-2026': {
@@ -1653,7 +1671,8 @@
                 daysToReunion: 1, daysToDemo: 4, daysToPrueba: 8, daysToPropuesta: 13, daysToOkVerbal: 18, daysToClose: 21,
                 bySDR: {
                     'agustina': { mqls: 26, reunion: 20, won: 3, wonValue: 28500 },
-                    'nicole': { mqls: 16, reunion: 12, won: 2, wonValue: 15000 }
+                    'nicole': { mqls: 16, reunion: 12, won: 2, wonValue: 15000 },
+                    'alberto': { mqls: 0, reunion: 0, won: 0, wonValue: 0 }
                 }
             },
             'abr-2026': {
@@ -1662,7 +1681,8 @@
                 daysToReunion: 1, daysToDemo: 3, daysToPrueba: 0, daysToPropuesta: 0, daysToOkVerbal: 0, daysToClose: 0,
                 bySDR: {
                     'agustina': { mqls: 5, reunion: 3, won: 0, wonValue: 0 },
-                    'nicole': { mqls: 4, reunion: 3, won: 0, wonValue: 0 }
+                    'nicole': { mqls: 4, reunion: 3, won: 0, wonValue: 0 },
+                    'alberto': { mqls: 0, reunion: 0, won: 0, wonValue: 0 }
                 }
             }
         };
@@ -1699,7 +1719,7 @@
                 pipeline: 0, speedToLead: 0, newCo: 0, existCo: 0
             };
 
-            const sdrs = sdrFilter === 'todos' ? ['agustina', 'nicole'] : [sdrFilter];
+            const sdrs = sdrFilter === 'todos' ? Object.keys(sdrData) : [sdrFilter];
             let speedCount = 0;
 
             sdrs.forEach(sdrKey => {
@@ -1895,7 +1915,7 @@
         function renderActivitiesChart() {
             const month = getCurrentMonth();
             const sdrFilter = getCurrentSDR();
-            const sdrs = sdrFilter === 'todos' ? ['agustina', 'nicole'] : [sdrFilter];
+            const sdrs = sdrFilter === 'todos' ? Object.keys(sdrData) : [sdrFilter];
 
             const datasets = sdrs.map(sdrKey => {
                 const data = sdrData[sdrKey];
@@ -1947,7 +1967,7 @@
         function renderTrendChart() {
             const month = getCurrentMonth();
             const sdrFilter = getCurrentSDR();
-            const sdrs = sdrFilter === 'todos' ? ['agustina', 'nicole'] : [sdrFilter];
+            const sdrs = sdrFilter === 'todos' ? Object.keys(sdrData) : [sdrFilter];
 
             const datasets = sdrs.map(sdrKey => {
                 const data = sdrData[sdrKey];
@@ -2003,43 +2023,24 @@
 
         function renderComparisonChart() {
             const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
-            const agustinaData = months.map(m => calculateTotalMetrics(m, 'agustina').activities);
-            const nicoleData = months.map(m => calculateTotalMetrics(m, 'nicole').activities);
+            const compDatasets = Object.keys(sdrData).map(key => {
+                const sdr = sdrData[key];
+                const hex = sdr.color.replace('#','');
+                const r = parseInt(hex.substring(0,2),16), g = parseInt(hex.substring(2,4),16), b = parseInt(hex.substring(4,6),16);
+                return {
+                    label: sdr.name,
+                    data: months.map(m => calculateTotalMetrics(m, key).activities),
+                    borderColor: sdr.color,
+                    backgroundColor: `rgba(${r},${g},${b},0.1)`,
+                    borderWidth: 3, fill: true, tension: 0.4,
+                    pointRadius: 5, pointBackgroundColor: sdr.color, pointBorderColor: 'white', pointBorderWidth: 2
+                };
+            });
 
             destroyChart('comparisonChart');
             charts.comparison = new Chart(document.getElementById('comparisonChart'), {
                 type: 'line',
-                data: {
-                    labels: ['Enero', 'Febrero', 'Marzo', 'Abril'],
-                    datasets: [
-                        {
-                            label: 'Agustina Avila',
-                            data: agustinaData,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 5,
-                            pointBackgroundColor: '#3b82f6',
-                            pointBorderColor: 'white',
-                            pointBorderWidth: 2
-                        },
-                        {
-                            label: 'Nicole Alarcón',
-                            data: nicoleData,
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 5,
-                            pointBackgroundColor: '#f59e0b',
-                            pointBorderColor: 'white',
-                            pointBorderWidth: 2
-                        }
-                    ]
-                },
+                data: { labels: ['Enero', 'Febrero', 'Marzo', 'Abril'], datasets: compDatasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -2065,39 +2066,25 @@
 
         function renderConversionChart() {
             const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
-            const agustinaRates = months.map(m => {
-                const metrics = calculateTotalMetrics(m, 'agustina');
-                return metrics.activities > 0 ? ((metrics.meetings / metrics.activities) * 100).toFixed(2) : 0;
-            });
-            const nicoleRates = months.map(m => {
-                const metrics = calculateTotalMetrics(m, 'nicole');
-                return metrics.activities > 0 ? ((metrics.meetings / metrics.activities) * 100).toFixed(2) : 0;
+            const convDatasets = Object.keys(sdrData).map(key => {
+                const sdr = sdrData[key];
+                return {
+                    label: sdr.name + ' (%)',
+                    data: months.map(m => {
+                        const metrics = calculateTotalMetrics(m, key);
+                        return metrics.activities > 0 ? ((metrics.meetings / metrics.activities) * 100).toFixed(2) : 0;
+                    }),
+                    backgroundColor: sdr.color,
+                    borderColor: sdr.color,
+                    borderRadius: 8,
+                    borderWidth: 0
+                };
             });
 
             destroyChart('conversionChart');
             charts.conversion = new Chart(document.getElementById('conversionChart'), {
                 type: 'bar',
-                data: {
-                    labels: ['Enero', 'Febrero', 'Marzo', 'Abril'],
-                    datasets: [
-                        {
-                            label: 'Agustina Avila (%)',
-                            data: agustinaRates,
-                            backgroundColor: '#3b82f6',
-                            borderColor: '#3b82f6',
-                            borderRadius: 8,
-                            borderWidth: 0
-                        },
-                        {
-                            label: 'Nicole Alarcón (%)',
-                            data: nicoleRates,
-                            backgroundColor: '#f59e0b',
-                            borderColor: '#f59e0b',
-                            borderRadius: 8,
-                            borderWidth: 0
-                        }
-                    ]
-                },
+                data: { labels: ['Enero', 'Febrero', 'Marzo', 'Abril'], datasets: convDatasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -2140,7 +2127,7 @@
         // ═══════════════════════════════════════════════════
 
         function getSpiritMetrics(month) {
-            const sdrs = ['agustina', 'nicole'];
+            const sdrs = Object.keys(sdrData);
             const results = {};
             sdrs.forEach(key => {
                 const weeks = getWeekData(key, month);
@@ -2332,7 +2319,7 @@
         function renderSpiritEvolution() {
             const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
             const monthLabels = ['Enero', 'Febrero', 'Marzo', 'Abril'];
-            const sdrs = ['agustina', 'nicole'];
+            const sdrs = Object.keys(sdrData);
 
             const datasets = sdrs.map(key => ({
                 label: sdrData[key].name,
@@ -2394,7 +2381,7 @@
         function renderSpiritTable() {
             const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
             const monthNames = { 'ene-2026': 'Enero', 'feb-2026': 'Febrero', 'mar-2026': 'Marzo', 'abr-2026': 'Abril' };
-            const sdrs = ['agustina', 'nicole'];
+            const sdrs = Object.keys(sdrData);
 
             function deltaHtml(val, avg, decimals = 0) {
                 const diff = val - avg;
@@ -2480,7 +2467,7 @@
         function renderWeeklyTable() {
             const month = getCurrentMonth();
             const sdrFilter = getCurrentSDR();
-            const sdrs = sdrFilter === 'todos' ? ['agustina', 'nicole'] : [sdrFilter];
+            const sdrs = sdrFilter === 'todos' ? Object.keys(sdrData) : [sdrFilter];
 
             let rows = '';
             sdrs.forEach(sdrKey => {
@@ -2514,7 +2501,7 @@
 
         function renderSemanasTable() {
             const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
-            const sdrs = ['agustina', 'nicole'];
+            const sdrs = Object.keys(sdrData);
             let rows = '';
 
             months.forEach(month => {
@@ -2799,7 +2786,7 @@
         function renderExecTrendChart() {
             const months = ['ene-2026', 'feb-2026', 'mar-2026', 'abr-2026'];
             const labels = ['Enero', 'Febrero', 'Marzo', 'Abril'];
-            const sdrs = ['agustina', 'nicole'];
+            const sdrs = Object.keys(sdrData);
 
             // Weekly rate per SDR
             const datasets = sdrs.map(key => ({
@@ -3017,7 +3004,7 @@
             document.getElementById('aeSpeedDetails').innerHTML = detailsHtml;
 
             // HANDOFF TABLE
-            const sdrs = ['agustina', 'nicole'];
+            const sdrs = Object.keys(sdrData);
             let handoffRows = '';
             let totMqls = 0, totReun = 0, totWon = 0, totRevenue = 0;
             sdrs.forEach(k => {
@@ -3289,12 +3276,41 @@
             renderSemanasTable();
             renderAnalisisCards();
 
-            // Update timestamp
-            setInterval(() => {
-                const now = new Date();
-                const mins = Math.floor(Math.random() * 5) + 1;
-                document.getElementById('lastUpdate').textContent = `Actualizado hace ${mins} min`;
-            }, 30000);
+            // Datos hasta: last dateRange in sdrData
+            (function() {
+                let lastDate = null;
+                Object.values(sdrData).forEach(sdr => {
+                    Object.values(sdr).forEach(monthArr => {
+                        monthArr.forEach(w => {
+                            if (w.dateRange) {
+                                // dateRange format: 'DD/MM-DD/MM' — extract end date
+                                const parts = w.dateRange.split('-');
+                                const endStr = parts[parts.length - 1]; // e.g. '10/04'
+                                const [day, mon] = endStr.split('/');
+                                const d = new Date(2026, parseInt(mon) - 1, parseInt(day));
+                                if (!lastDate || d > lastDate) lastDate = d;
+                            }
+                        });
+                    });
+                });
+                if (lastDate) {
+                    const dd = String(lastDate.getDate()).padStart(2, '0');
+                    const mm = String(lastDate.getMonth() + 1).padStart(2, '0');
+                    document.getElementById('datosHastaLabel').textContent = `${dd}/${mm}/${lastDate.getFullYear()}`;
+                }
+            })();
+
+            // Real elapsed time since page load
+            const pageLoadTime = Date.now();
+            function updateElapsed() {
+                const mins = Math.floor((Date.now() - pageLoadTime) / 60000);
+                const txt = mins < 1 ? 'Cargado hace menos de 1 min'
+                           : mins === 1 ? 'Cargado hace 1 min'
+                           : `Cargado hace ${mins} min`;
+                document.getElementById('lastUpdate').textContent = txt;
+            }
+            updateElapsed();
+            setInterval(updateElapsed, 60000);
         });
 
         // Responsive sidebar toggle
